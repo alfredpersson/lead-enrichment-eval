@@ -1,0 +1,39 @@
+[project]
+name = "lead-enrichment-eval"
+version = "0.1.0"
+description = "Backend services and eval harness for the integrated AI feature demo."
+requires-python = ">=3.12"
+dependencies = [
+  "anthropic>=0.40.0",
+  "modal>=0.69.0",
+  "fastapi>=0.115.0",
+  "pydantic>=2.9.0",
+  "psycopg[binary,pool]>=3.2.0",
+  "pgvector>=0.3.0",
+  "voyageai>=0.3.0",
+  "lingua-language-detector>=2.0.0",
+  "upstash-redis>=1.2.0",
+  "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "pytest-asyncio>=0.24.0",
+  "ruff>=0.7.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["services"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

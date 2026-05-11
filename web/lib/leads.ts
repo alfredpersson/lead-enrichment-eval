@@ -4,6 +4,10 @@
 // doesn't make sense to persist.
 
 import { EXEMPLARS, type Exemplar } from "@/lib/exemplars";
+import { firstLine, isBrowser, nthNonEmptyLine } from "@/lib/utils";
+
+export const PROFILE_CAP = 4000;
+export const COMPANY_CAP = 2000;
 
 export type LeadStatus = "new" | "working" | "auto_add" | "discard";
 
@@ -20,31 +24,6 @@ export interface LeadRow {
 }
 
 const STORAGE_KEY = "lead-enrichment.leads.v1";
-
-function isBrowser(): boolean {
-  return (
-    typeof window !== "undefined" && typeof window.localStorage !== "undefined"
-  );
-}
-
-function firstLine(text: string): string {
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (trimmed) return trimmed;
-  }
-  return "";
-}
-
-function nthNonEmptyLine(text: string, n: number): string {
-  let i = 0;
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    if (i === n) return trimmed;
-    i += 1;
-  }
-  return "";
-}
 
 export function deriveCompanyName(
   title: string,
@@ -97,7 +76,11 @@ export function buildPasteLead(
 }
 
 function seed(): LeadRow[] {
-  return EXEMPLARS.map(exemplarToLead);
+  const now = Date.now();
+  return EXEMPLARS.map((ex, i) => ({
+    ...exemplarToLead(ex),
+    createdAt: now - i,
+  }));
 }
 
 export function loadLeads(): LeadRow[] {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "@/lib/conversations";
+import { formatNumber } from "@/lib/utils";
 import styles from "./chat.module.css";
 
 const ASSISTANT_NAME = "Lead Copilot";
@@ -21,10 +22,6 @@ interface Props {
   onCancelEdit: () => void;
   isStreaming: boolean;
   onStop?: () => void;
-}
-
-function formatNumber(n: number): string {
-  return n.toLocaleString("en-US");
 }
 
 export function MessageBubble({

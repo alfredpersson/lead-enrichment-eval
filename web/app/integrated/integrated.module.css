@@ -804,3 +804,112 @@
     display: none;
   }
 }
+
+/* -------- Queue controls (search, sort, action chips) -------- */
+
+.queueControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--cream-elevated);
+}
+
+.queueControlsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.88rem;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.sortSelect {
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  width: auto;
+  cursor: pointer;
+}
+
+.visibleCount {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.statusChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.statusChip {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--navy-soft);
+  border-radius: 9999px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.statusChip:hover,
+.statusChip:focus-visible {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.statusChipActive {
+  background: var(--amber-soft);
+  border-color: rgba(199, 123, 61, 0.5);
+  color: var(--navy);
+}
+
+.statusChipActive:hover,
+.statusChipActive:focus-visible {
+  color: var(--navy);
+  border-color: var(--amber);
+}
+
+.queueEmpty {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  padding: 1.4rem 1.25rem;
+  text-align: center;
+  background: var(--cream-elevated);
+}
+
+.deleteButton {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--danger);
+  border-radius: 9999px;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deleteButton:hover,
+.deleteButton:focus-visible {
+  background: rgba(185, 74, 58, 0.1);
+  border-color: rgba(185, 74, 58, 0.4);
+}

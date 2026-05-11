@@ -38,3 +38,4 @@ yarn-error.log*
 .claude
 *.md
 !README.md
+.playwright-mcp/

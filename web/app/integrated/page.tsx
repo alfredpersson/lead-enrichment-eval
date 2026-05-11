@@ -9,16 +9,22 @@ import {
   type ReactNode,
 } from "react";
 import { EXEMPLARS, type Exemplar } from "@/lib/exemplars";
+import {
+  COMPANY_CAP,
+  PROFILE_CAP,
+  deriveCompanyName,
+  exemplarToLead,
+} from "@/lib/leads";
+import { parseSseStream } from "@/lib/sse";
+import { QueueEmpty } from "@/app/_shared/queue-empty";
 import type {
   Action,
   Claim,
   EnrichOutput,
   StreamEvent,
 } from "@/lib/types";
+import { firstLine, formatNumber, nthNonEmptyLine } from "@/lib/utils";
 import styles from "./integrated.module.css";
-
-const PROFILE_CAP = 4000;
-const COMPANY_CAP = 2000;
 
 const ACTION_LABELS: Record<Action, string> = {
   auto_add: "Add to prospects",
@@ -42,6 +48,32 @@ const DIMENSION_LABELS: Array<[keyof EnrichOutput["fit_score"]["dimensions"], st
   ["role_match", "Role"],
 ];
 
+type ActionFilter = "auto_add" | "propose" | "discard" | "refuse" | "unscored";
+type SortBy = "recent" | "fit" | "name" | "action";
+
+const ACTION_FILTER_ORDER: ActionFilter[] = [
+  "auto_add",
+  "propose",
+  "discard",
+  "refuse",
+  "unscored",
+];
+
+const ACTION_FILTER_LABELS: Record<ActionFilter, string> = {
+  auto_add: "Auto-add",
+  propose: "Propose",
+  discard: "Discard",
+  refuse: "Refuse",
+  unscored: "Unscored",
+};
+
+const SORT_LABELS: Record<SortBy, string> = {
+  recent: "Most recent",
+  fit: "Fit score",
+  name: "Name",
+  action: "Action",
+};
+
 type RowStatus = "idle" | "streaming" | "done" | "error";
 
 type ErrorState = { code: string; message: string };
@@ -49,7 +81,7 @@ type ErrorState = { code: string; message: string };
 interface Row {
   id: string;
   source: "exemplar" | "paste";
-  label: string;
+  leadName: string;
   title: string;
   companyName: string;
   profile: string;
@@ -63,50 +95,12 @@ interface Row {
   error: ErrorState | null;
   confirmedAt: number | null;
   hoveredQuote: string | null;
+  createdAt: number;
 }
 
-function firstLine(text: string): string {
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (trimmed) return trimmed;
-  }
-  return "";
-}
-
-function nthNonEmptyLine(text: string, n: number): string {
-  let i = 0;
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    if (i === n) return trimmed;
-    i += 1;
-  }
-  return "";
-}
-
-function deriveCompanyName(title: string, company: string | null): string {
-  // Title often looks like "VP of Product at Lattice Forge" or "VP Product på Norrsken Labs".
-  const match = title.match(/\s+(?:at|på|hos|bei|chez)\s+(.+)$/i);
-  if (match) return match[1].trim();
-  if (company) {
-    const sentence = company.split(/[.!?]/)[0]?.trim() ?? "";
-    const head = sentence.split(/\s+is\s+|\s+är\s+/i)[0]?.trim();
-    if (head) return head;
-  }
-  return "";
-}
-
-function exemplarToRow(ex: Exemplar): Row {
-  const label = firstLine(ex.profile) || ex.label;
-  const title = nthNonEmptyLine(ex.profile, 1) || "";
+function exemplarToRow(ex: Exemplar, createdAt: number): Row {
   return {
-    id: ex.id,
-    source: "exemplar",
-    label,
-    title,
-    companyName: deriveCompanyName(title, ex.company),
-    profile: ex.profile,
-    company: ex.company,
+    ...exemplarToLead(ex),
     status: "idle",
     selected: false,
     expanded: false,
@@ -116,10 +110,14 @@ function exemplarToRow(ex: Exemplar): Row {
     error: null,
     confirmedAt: null,
     hoveredQuote: null,
+    createdAt,
   };
 }
 
-const INITIAL_ROWS: Row[] = EXEMPLARS.map(exemplarToRow);
+const INITIAL_ROWS: Row[] = (() => {
+  const now = Date.now();
+  return EXEMPLARS.map((ex, i) => exemplarToRow(ex, now - i));
+})();
 
 function normalise(text: string): string {
   return text.replace(/\s+/g, " ").trim().toLowerCase();
@@ -168,13 +166,6 @@ function highlightInput(text: string, quote: string | null): ReactNode {
       {text.slice(end)}
     </>
   );
-}
-
-function formatNumber(n: number, digits = 0): string {
-  return n.toLocaleString("en-US", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
 }
 
 function rowInputText(row: Row): string {
@@ -585,10 +576,10 @@ function QueueRow({
           checked={row.selected}
           onChange={onToggleSelect}
           disabled={disableSelection || row.status === "streaming"}
-          aria-label={`Select ${row.label}`}
+          aria-label={`Select ${row.leadName}`}
         />
         <div className={styles.rowIdent}>
-          <span className={styles.rowName}>{row.label}</span>
+          <span className={styles.rowName}>{row.leadName}</span>
           {row.title && (
             <span className={styles.rowTitle}>{row.title}</span>
           )}
@@ -696,6 +687,12 @@ export default function IntegratedPage() {
   const abortControllers = useRef<Map<string, AbortController>>(new Map());
   const pasteCounter = useRef(1);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [actionFilters, setActionFilters] = useState<Set<ActionFilter>>(
+    () => new Set(ACTION_FILTER_ORDER),
+  );
+  const [sortBy, setSortBy] = useState<SortBy>("recent");
+
   const updateRow = useCallback(
     (id: string, patch: Partial<Row> | ((r: Row) => Partial<Row>)) => {
       setRows((prev) =>
@@ -748,49 +745,27 @@ export default function IntegratedPage() {
           });
           return;
         }
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          let sep = buffer.indexOf("\n\n");
-          while (sep !== -1) {
-            const frame = buffer.slice(0, sep);
-            buffer = buffer.slice(sep + 2);
-            for (const line of frame.split("\n")) {
-              if (!line.startsWith("data:")) continue;
-              const json = line.slice(5).trim();
-              if (!json) continue;
-              try {
-                const event = JSON.parse(json) as StreamEvent;
-                if (event.type === "thinking") {
-                  updateRow(rowSnapshot.id, (r) => ({
-                    thinking: r.thinking + event.delta,
-                  }));
-                } else if (event.type === "result") {
-                  updateRow(rowSnapshot.id, {
-                    result: event.output,
-                    status: "done",
-                    selected: false,
-                  });
-                  terminal = true;
-                } else if (event.type === "error") {
-                  updateRow(rowSnapshot.id, {
-                    status: "error",
-                    selected: false,
-                    error: { code: event.code, message: event.message },
-                  });
-                  terminal = true;
-                }
-              } catch {
-                // ignore malformed frame
-              }
-            }
-            sep = buffer.indexOf("\n\n");
+        await parseSseStream<StreamEvent>(res, (event) => {
+          if (event.type === "thinking") {
+            updateRow(rowSnapshot.id, (r) => ({
+              thinking: r.thinking + event.delta,
+            }));
+          } else if (event.type === "result") {
+            updateRow(rowSnapshot.id, {
+              result: event.output,
+              status: "done",
+              selected: false,
+            });
+            terminal = true;
+          } else if (event.type === "error") {
+            updateRow(rowSnapshot.id, {
+              status: "error",
+              selected: false,
+              error: { code: event.code, message: event.message },
+            });
+            terminal = true;
           }
-        }
+        });
         if (!terminal) {
           updateRow(rowSnapshot.id, {
             status: "error",
@@ -860,12 +835,12 @@ export default function IntegratedPage() {
     (profile: string, company: string | null) => {
       const idx = pasteCounter.current++;
       const id = `paste-${idx}`;
-      const label = firstLine(profile).slice(0, 60) || `Paste ${idx}`;
+      const leadName = firstLine(profile).slice(0, 60) || `Paste ${idx}`;
       const title = nthNonEmptyLine(profile, 1).slice(0, 80);
       const newRow: Row = {
         id,
         source: "paste",
-        label,
+        leadName,
         title,
         companyName: deriveCompanyName(title, company),
         profile,
@@ -879,11 +854,55 @@ export default function IntegratedPage() {
         error: null,
         confirmedAt: null,
         hoveredQuote: null,
+        createdAt: Date.now(),
       };
-      setRows((prev) => [...prev, newRow]);
+      setRows((prev) => [newRow, ...prev]);
     },
     [],
   );
+
+  const visibleRows = useMemo<Row[]>(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const matchesQuery = (r: Row) =>
+      !q ||
+      r.leadName.toLowerCase().includes(q) ||
+      r.title.toLowerCase().includes(q) ||
+      r.companyName.toLowerCase().includes(q);
+
+    const matchesAction = (r: Row): boolean => {
+      if (actionFilters.size === 0) return false;
+      if (!r.result) return actionFilters.has("unscored");
+      return actionFilters.has(r.result.action as ActionFilter);
+    };
+
+    const filtered = rows.filter((r) => matchesQuery(r) && matchesAction(r));
+
+    if (sortBy === "name") {
+      return [...filtered].sort((a, b) =>
+        a.leadName.localeCompare(b.leadName, undefined, { sensitivity: "base" }),
+      );
+    }
+    if (sortBy === "fit") {
+      return [...filtered].sort((a, b) => {
+        const av = a.result?.fit_score.value ?? -1;
+        const bv = b.result?.fit_score.value ?? -1;
+        if (av !== bv) return bv - av;
+        return b.createdAt - a.createdAt;
+      });
+    }
+    if (sortBy === "action") {
+      const idx = (r: Row): number => {
+        if (!r.result) return ACTION_FILTER_ORDER.indexOf("unscored");
+        return ACTION_FILTER_ORDER.indexOf(r.result.action as ActionFilter);
+      };
+      return [...filtered].sort((a, b) => {
+        const sd = idx(a) - idx(b);
+        if (sd !== 0) return sd;
+        return b.createdAt - a.createdAt;
+      });
+    }
+    return [...filtered].sort((a, b) => b.createdAt - a.createdAt);
+  }, [rows, searchQuery, actionFilters, sortBy]);
 
   const selectedIdleRows = useMemo(
     () =>
@@ -897,6 +916,10 @@ export default function IntegratedPage() {
     [rows],
   );
   const anySelected = useMemo(() => rows.some((r) => r.selected), [rows]);
+  const selectedCount = useMemo(
+    () => rows.reduce((acc, r) => (r.selected ? acc + 1 : acc), 0),
+    [rows],
+  );
 
   const onRunSelected = useCallback(() => {
     if (anyStreaming) return;
@@ -907,14 +930,45 @@ export default function IntegratedPage() {
   }, [rows, streamRow, anyStreaming]);
 
   const onSelectAll = useCallback(() => {
+    const visibleIds = new Set(visibleRows.map((r) => r.id));
     setRows((prev) =>
-      prev.map((r) => (r.status === "streaming" ? r : { ...r, selected: true })),
+      prev.map((r) =>
+        visibleIds.has(r.id) && r.status !== "streaming"
+          ? { ...r, selected: true }
+          : r,
+      ),
     );
-  }, []);
+  }, [visibleRows]);
 
   const onClearSelection = useCallback(() => {
     setRows((prev) => prev.map((r) => ({ ...r, selected: false })));
   }, []);
+
+  const onToggleActionFilter = useCallback((f: ActionFilter) => {
+    setActionFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(f)) next.delete(f);
+      else next.add(f);
+      return next;
+    });
+  }, []);
+
+  const onResetFilters = useCallback(() => {
+    setSearchQuery("");
+    setActionFilters(new Set(ACTION_FILTER_ORDER));
+  }, []);
+
+  const onDeleteSelected = useCallback(() => {
+    const toRemove = new Set(
+      rows.filter((r) => r.selected).map((r) => r.id),
+    );
+    if (toRemove.size === 0) return;
+    for (const id of toRemove) {
+      abortControllers.current.get(id)?.abort();
+      abortControllers.current.delete(id);
+    }
+    setRows((prev) => prev.filter((r) => !toRemove.has(r.id)));
+  }, [rows]);
 
   useEffect(() => {
     const controllers = abortControllers.current;
@@ -940,11 +994,20 @@ export default function IntegratedPage() {
               className={styles.linkButton}
               onClick={anySelected ? onClearSelection : onSelectAll}
             >
-              {anySelected ? "Clear selection" : "Select all"}
+              {anySelected ? "Clear selection" : "Select all visible"}
             </button>
             <span className={styles.muted}>
               {selectedIdleRows.length} selected, ready to run
             </span>
+            {selectedCount > 0 && (
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={onDeleteSelected}
+              >
+                Delete {selectedCount}
+              </button>
+            )}
           </div>
           <button
             type="button"
@@ -956,6 +1019,58 @@ export default function IntegratedPage() {
           </button>
         </div>
 
+        <div className={styles.queueControls}>
+          <div className={styles.queueControlsRow}>
+            <input
+              type="search"
+              className={styles.searchInput}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, title, company…"
+              aria-label="Search leads"
+            />
+            <select
+              className={styles.sortSelect}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              aria-label="Sort leads"
+            >
+              {(Object.keys(SORT_LABELS) as SortBy[]).map((s) => (
+                <option key={s} value={s}>
+                  Sort: {SORT_LABELS[s]}
+                </option>
+              ))}
+            </select>
+            <span className={styles.visibleCount}>
+              {visibleRows.length === rows.length
+                ? `${rows.length} lead${rows.length === 1 ? "" : "s"}`
+                : `${visibleRows.length} of ${rows.length} leads`}
+            </span>
+          </div>
+          <div
+            className={styles.statusChips}
+            role="group"
+            aria-label="Filter by action"
+          >
+            {ACTION_FILTER_ORDER.map((f) => {
+              const active = actionFilters.has(f);
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  className={`${styles.statusChip} ${
+                    active ? styles.statusChipActive : ""
+                  }`}
+                  onClick={() => onToggleActionFilter(f)}
+                  aria-pressed={active}
+                >
+                  {ACTION_FILTER_LABELS[f]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className={styles.queueColumnHeader} aria-hidden="true">
           <span />
           <span>Lead</span>
@@ -965,20 +1080,29 @@ export default function IntegratedPage() {
           <span />
         </div>
 
-        <div className={styles.queueList}>
-          {rows.map((row) => (
-            <QueueRow
-              key={row.id}
-              row={row}
-              disableSelection={anyStreaming}
-              onToggleSelect={() => onToggleSelect(row.id)}
-              onToggleExpand={() => onToggleExpand(row.id)}
-              onAct={() => onConfirm(row.id)}
-              onHover={(q) => onHover(row.id, q)}
-              onToggleUnderHood={() => onToggleUnderHood(row.id)}
-            />
-          ))}
-        </div>
+        {visibleRows.length === 0 ? (
+          <QueueEmpty
+            query={searchQuery}
+            onReset={onResetFilters}
+            className={styles.queueEmpty}
+            buttonClassName={styles.linkButton}
+          />
+        ) : (
+          <div className={styles.queueList}>
+            {visibleRows.map((row) => (
+              <QueueRow
+                key={row.id}
+                row={row}
+                disableSelection={anyStreaming}
+                onToggleSelect={() => onToggleSelect(row.id)}
+                onToggleExpand={() => onToggleExpand(row.id)}
+                onAct={() => onConfirm(row.id)}
+                onHover={(q) => onHover(row.id, q)}
+                onToggleUnderHood={() => onToggleUnderHood(row.id)}
+              />
+            ))}
+          </div>
+        )}
 
         <Composer onAdd={onAddPaste} disabled={anyStreaming} />
       </div>

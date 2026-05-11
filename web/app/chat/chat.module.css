@@ -1016,3 +1016,280 @@
   color: var(--navy);
   text-decoration: underline;
 }
+
+/* -------- Queue controls (search, sort, chips, bulk bar) -------- */
+
+.queueControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.queueControlsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.85rem;
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.sortSelect {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  width: auto;
+  cursor: pointer;
+}
+
+.statusChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.statusChip {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--navy-soft);
+  border-radius: 9999px;
+  padding: 0.18rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.statusChip:hover,
+.statusChip:focus-visible {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.statusChipActive {
+  background: var(--amber-soft);
+  border-color: rgba(199, 123, 61, 0.5);
+  color: var(--navy);
+}
+
+.statusChipActive:hover,
+.statusChipActive:focus-visible {
+  color: var(--navy);
+  border-color: var(--amber);
+}
+
+.bulkBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--cream);
+  padding: 0.45rem 0.6rem;
+}
+
+.bulkBarLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.8rem;
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.bulkBarRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bulkLink {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--navy);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+.bulkLink:hover,
+.bulkLink:focus-visible {
+  color: var(--amber);
+}
+
+.bulkSelect {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.55rem;
+  width: auto;
+  cursor: pointer;
+}
+
+.bulkDelete {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--danger);
+  border-radius: 9999px;
+  padding: 0.22rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.bulkDelete:hover,
+.bulkDelete:focus-visible {
+  background: rgba(185, 74, 58, 0.1);
+  border-color: rgba(185, 74, 58, 0.4);
+}
+
+.queueEmpty {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.rowCheck {
+  align-self: center;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--amber);
+  cursor: pointer;
+}
+
+/* -------- Lead record panel -------- */
+
+.leadRecord {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border: 1px solid rgba(199, 123, 61, 0.3);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  padding: 0.5rem 0.75rem;
+}
+
+.leadRecordHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.leadRecordCaret {
+  color: var(--amber);
+  font-size: 0.78rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.leadRecordTitle {
+  font-weight: 600;
+  color: var(--navy);
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.leadRecordBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.1rem;
+}
+
+.leadRecordLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.recordText {
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.7rem;
+  max-height: 14rem;
+  overflow: auto;
+  margin: 0;
+}
+
+/* -------- Empty-state prompts -------- */
+
+.emptyPrompts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
+}
+
+.emptyPromptsHook {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.emptyPromptsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
+.emptyPromptButton {
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  color: var(--navy);
+  border-radius: 9999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: left;
+  letter-spacing: 0.01em;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.emptyPromptButton:hover:not(:disabled),
+.emptyPromptButton:focus-visible:not(:disabled) {
+  border-color: var(--amber);
+  color: var(--amber);
+}

@@ -2,6 +2,8 @@
 // user's device — they never leave the browser. The /privacy page covers the
 // disclosure; the composer tooltip surfaces it inline.
 
+import { isBrowser } from "@/lib/utils";
+
 export interface ChatMeta {
   request_id: string;
   latency_ms: number;
@@ -37,10 +39,6 @@ export interface StoredConversation {
 }
 
 const STORAGE_KEY = "lead-enrichment.conversations.v1";
-
-function isBrowser(): boolean {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
-}
 
 export function loadConversations(): StoredConversation[] {
   if (!isBrowser()) return [];

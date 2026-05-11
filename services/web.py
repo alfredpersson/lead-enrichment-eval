@@ -30,9 +30,16 @@ class ChatMessage(BaseModel):
     content: str
 
 
+class ChatContext(BaseModel):
+    lead_name: str | None = None
+    profile: str | None = None
+    company: str | None = None
+
+
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     example_id: str | None = None
+    context: ChatContext | None = None
 
 
 class NeighboursRequest(BaseModel):
@@ -81,9 +88,15 @@ def build_app() -> FastAPI:
         await _gate(request, bucket="chat")
         messages = [m.model_dump() for m in payload.messages]
 
+        context = payload.context.model_dump() if payload.context else None
+
         async def event_source():
             try:
-                async for event in chat_stream(messages, example_id=payload.example_id):
+                async for event in chat_stream(
+                    messages,
+                    example_id=payload.example_id,
+                    context=context,
+                ):
                     yield f"data: {json.dumps(event)}\n\n"
             except ValidationError as e:
                 yield (

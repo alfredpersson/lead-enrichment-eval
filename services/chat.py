@@ -44,13 +44,23 @@ async def chat_stream(
     example_id: str | None = None,
     profile_for_validation: str | None = None,
     company_for_validation: str | None = None,
+    context: dict[str, Any] | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
     """
     Stream tokens from Sonnet for the chat build. Yields events:
       {"type": "text", "delta": "..."}
       {"type": "done", "meta": {...}}
+
+    When `context` is provided, the lead's profile/company is injected as a
+    second system block so the assistant has the active record without the
+    user needing to paste it.
     """
-    if profile_for_validation is not None:
+    if context is not None:
+        input_lang = check_input(
+            context.get("profile") or "",
+            context.get("company") or None,
+        )
+    elif profile_for_validation is not None:
         input_lang = check_input(profile_for_validation, company_for_validation)
     else:
         first_user = next(
@@ -71,11 +81,33 @@ async def chat_stream(
     usage_in = usage_out = 0
     cache_hit = False
 
+    system_blocks = chat_system_blocks()
+    if context:
+        lead_name = (context.get("lead_name") or "").strip()
+        profile = (context.get("profile") or "").strip()
+        company = (context.get("company") or "").strip()
+        lines = ["Active lead the user is asking about:"]
+        if lead_name:
+            lines.append(f"Name: {lead_name}")
+        if profile:
+            lines.append(f"Profile:\n{profile}")
+        if company:
+            lines.append(f"Company:\n{company}")
+        lines.append(
+            "Answer with this lead in mind. If the user asks comparative "
+            "questions referencing other leads from earlier in the "
+            "conversation, draw on what was discussed."
+        )
+        system_blocks = [
+            *system_blocks,
+            {"type": "text", "text": "\n\n".join(lines)},
+        ]
+
     client = _get_client()
     async with client.messages.stream(
         model=MODEL_ID,
         max_tokens=MAX_OUTPUT_TOKENS,
-        system=chat_system_blocks(),
+        system=system_blocks,
         messages=messages,
     ) as stream:
         async for chunk in stream.text_stream:

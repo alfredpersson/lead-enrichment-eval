@@ -1,6 +1,6 @@
 # lead-enrichment-eval
 
-A B2B lead enrichment AI feature, built two ways. Same model (Claude Sonnet 4.6), different output contracts. The integrated build is structured, instrumented, and evaluated. The chat build is what an early-version B2B SaaS team realistically ships as their first AI feature: a well-written system prompt plus chat. Both run against the same eval set so the architectural difference is measurable.
+A B2B lead enrichment AI feature, built two ways as two realistic products. Same model (Claude Sonnet 4.6), same UI polish, same lead-queue product shape — they differ only at the model-side contract. The integrated build runs a strict tool schema with extended thinking, a claim-grounding rule, and structured outputs. The chat build runs the same model with a task-describing system prompt and no tools, no schema, no grounding rule. Both run against the same eval set so the architectural difference is measurable, and neither side is a strawman.
 
 ## Thesis
 

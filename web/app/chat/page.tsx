@@ -8,78 +8,107 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { EXEMPLARS, type Exemplar } from "@/lib/exemplars";
+import Link from "next/link";
+import {
+  autoTitle,
+  loadConversations,
+  newId,
+  saveConversations,
+  sortByUpdated,
+  type ChatMessage,
+  type ChatMeta,
+  type StoredConversation,
+} from "@/lib/conversations";
+import {
+  STATUS_LABELS,
+  STATUS_ORDER,
+  buildPasteLead,
+  loadLeads,
+  saveLeads,
+  type LeadRow,
+  type LeadStatus,
+} from "@/lib/leads";
+import { HistoryMenu } from "./conversation-list";
+import { MessageBubble } from "./message-bubble";
 import styles from "./chat.module.css";
 
-const INPUT_CAP = 4000;
-const COUNTER_THRESHOLD = 3000;
-
-// Chat-specific starter copy. The text pasted into the composer is the
-// exemplar's profile+company verbatim, but the card label and teaser are
-// reframed as a salesperson workflow rather than an eval category.
-const STARTER_COPY: Record<string, { label: string; teaser: string }> = {
-  "1": {
-    label: "Qualify a VP Product",
-    teaser: "Series B B2B SaaS, AI feature already shipped",
-  },
-  "2": {
-    label: "Decide on a borderline founder",
-    teaser: "Series A, consumer-led with a growing B2B side",
-  },
-  "3": {
-    label: "Triage a sparse profile",
-    teaser: "Freelance designer, two-line bio",
-  },
-  "4": {
-    label: "Qualify an engineering leader",
-    teaser: "Director of Engineering, owns an AI feature",
-  },
-  "5": {
-    label: "Qualify a non-English profile",
-    teaser: "Nordic SaaS, profile written in Swedish",
-  },
-};
-
-interface ChatMeta {
-  request_id: string;
-  latency_ms: number;
-  tokens_in: number;
-  tokens_out: number;
-  cache_hit: boolean;
-  model: string;
-  turn_count: number;
-}
-
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-  meta?: ChatMeta;
-  exampleId?: string | null;
-}
+const PROFILE_CAP = 4000;
+const COMPANY_CAP = 2000;
+const COMPOSER_CAP = 2000;
+const GETTING_LONG_TURNS = 6;
+const GETTING_LONG_TOKENS_IN = 8000;
 
 interface ErrorState {
   code: string;
   message: string;
 }
 
-function exemplarToComposerText(ex: Exemplar): string {
-  return ex.company ? `${ex.profile}\n\n${ex.company}` : ex.profile;
+interface SendOptions {
+  replaceFrom?: number;
 }
 
 function formatNumber(n: number): string {
   return n.toLocaleString("en-US");
 }
 
+function leadDescriptor(lead: LeadRow): string {
+  const parts = [lead.leadName];
+  if (lead.title) parts.push(lead.title);
+  return parts.filter(Boolean).join(", ");
+}
+
 export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [activeRowId, setActiveRowId] = useState<string | null>(null);
+
+  const [conversations, setConversations] = useState<StoredConversation[]>([]);
+  const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
   const [composer, setComposer] = useState("");
-  const [pendingExampleId, setPendingExampleId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<ErrorState | null>(null);
   const [showMetrics, setShowMetrics] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingDraft, setEditingDraft] = useState("");
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteProfile, setPasteProfile] = useState("");
+  const [pasteCompany, setPasteCompany] = useState("");
+  const pasteCounter = useRef(1);
+
   const threadRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Initial load
+  useEffect(() => {
+    const ls = loadLeads();
+    setLeads(ls);
+    const convos = loadConversations();
+    setConversations(convos);
+    const sorted = sortByUpdated(convos);
+    setActiveConvoId(sorted[0]?.id ?? null);
+    // Initialise paste counter from any existing paste-N ids
+    const maxPaste = ls
+      .filter((l) => l.source === "paste")
+      .map((l) => Number(l.id.replace(/^paste-/, "")))
+      .filter((n) => Number.isFinite(n))
+      .reduce((acc, n) => Math.max(acc, n), 0);
+    pasteCounter.current = maxPaste + 1;
+    setLoaded(true);
+  }, []);
+
+  const activeRow = useMemo(
+    () => leads.find((l) => l.id === activeRowId) ?? null,
+    [leads, activeRowId],
+  );
+  const activeConvo = useMemo(
+    () => conversations.find((c) => c.id === activeConvoId) ?? null,
+    [conversations, activeConvoId],
+  );
+  const messages = activeConvo?.messages ?? [];
 
   useEffect(() => {
     const el = threadRef.current;
@@ -102,346 +131,750 @@ export default function ChatPage() {
     return { turns, latency, tokensIn, tokensOut };
   }, [messages]);
 
-  const send = useCallback(async () => {
-    const text = composer.trim();
-    if (!text || sending) return;
-    if (text.length > INPUT_CAP) return;
+  const gettingLong =
+    totals.turns >= GETTING_LONG_TURNS ||
+    totals.tokensIn >= GETTING_LONG_TOKENS_IN;
 
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    setError(null);
-    const exampleId = messages.length === 0 ? pendingExampleId : null;
-    const userMsg: ChatMessage = {
-      role: "user",
-      content: text,
-      exampleId,
-    };
-    const conversation = [...messages, userMsg];
-    setMessages([...conversation, { role: "assistant", content: "" }]);
-    setComposer("");
-    setPendingExampleId(null);
-    setSending(true);
-
-    let assistantText = "";
-    let assistantMeta: ChatMeta | undefined;
-    let errorEvent: ErrorState | null = null;
-    let terminal = false;
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          messages: conversation.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          example_id: exampleId,
-        }),
-        signal: controller.signal,
-      });
-      if (!res.ok || !res.body) {
-        setError({
-          code: `http_${res.status}`,
-          message: `Upstream returned ${res.status}.`,
-        });
-        setMessages((prev) => prev.slice(0, -1));
-        return;
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        let sep = buffer.indexOf("\n\n");
-        while (sep !== -1) {
-          const frame = buffer.slice(0, sep);
-          buffer = buffer.slice(sep + 2);
-          for (const line of frame.split("\n")) {
-            if (!line.startsWith("data:")) continue;
-            const json = line.slice(5).trim();
-            if (!json) continue;
-            try {
-              const event = JSON.parse(json) as
-                | { type: "text"; delta: string }
-                | { type: "done"; meta: ChatMeta }
-                | { type: "error"; code: string; message: string };
-              if (event.type === "text") {
-                assistantText += event.delta;
-                setMessages((prev) => {
-                  const next = [...prev];
-                  const last = next[next.length - 1];
-                  if (last?.role === "assistant" && !last.meta) {
-                    next[next.length - 1] = { ...last, content: assistantText };
-                  }
-                  return next;
-                });
-              } else if (event.type === "done") {
-                assistantMeta = event.meta;
-                terminal = true;
-              } else if (event.type === "error") {
-                errorEvent = { code: event.code, message: event.message };
-                terminal = true;
-              }
-            } catch {
-              // ignore malformed frame
-            }
-          }
-          sep = buffer.indexOf("\n\n");
-        }
-      }
-
-      if (errorEvent) {
-        setError(errorEvent);
-        setMessages((prev) => prev.slice(0, -1));
-        return;
-      }
-
-      if (!terminal) {
-        setError({
-          code: "stream_ended",
-          message: "Stream ended without a completion event.",
-        });
-        setMessages((prev) => prev.slice(0, -1));
-        return;
-      }
-
-      setMessages((prev) => {
-        const next = [...prev];
-        const last = next[next.length - 1];
-        if (last?.role === "assistant") {
-          next[next.length - 1] = {
-            ...last,
-            content: assistantText,
-            meta: assistantMeta,
-          };
-        }
+  const persistConversations = useCallback(
+    (updater: (prev: StoredConversation[]) => StoredConversation[]) => {
+      setConversations((prev) => {
+        const next = updater(prev);
+        saveConversations(next);
         return next;
       });
-    } catch (err) {
-      if ((err as Error).name === "AbortError") return;
-      setError({
-        code: "network",
-        message: (err as Error).message ?? "Network error",
-      });
-      setMessages((prev) => prev.slice(0, -1));
-    } finally {
-      setSending(false);
-      abortRef.current = null;
-    }
-  }, [composer, messages, pendingExampleId, sending]);
+    },
+    [],
+  );
 
-  const useStarter = useCallback((ex: Exemplar) => {
-    setComposer(exemplarToComposerText(ex));
-    setPendingExampleId(ex.id);
-    composerRef.current?.focus();
+  const persistLeads = useCallback(
+    (updater: (prev: LeadRow[]) => LeadRow[]) => {
+      setLeads((prev) => {
+        const next = updater(prev);
+        saveLeads(next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleSelectRow = useCallback((id: string) => {
+    setActiveRowId((curr) => (curr === id ? null : id));
   }, []);
 
-  const resetConversation = useCallback(() => {
+  const handleStatusChange = useCallback(
+    (id: string, status: LeadStatus) => {
+      persistLeads((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, status } : l)),
+      );
+    },
+    [persistLeads],
+  );
+
+  const handleAddPaste = useCallback(
+    (profile: string, company: string | null) => {
+      const id = `paste-${pasteCounter.current++}`;
+      const lead = buildPasteLead(id, profile, company);
+      persistLeads((prev) => [lead, ...prev]);
+      setActiveRowId(id);
+      setPasteOpen(false);
+      setPasteProfile("");
+      setPasteCompany("");
+    },
+    [persistLeads],
+  );
+
+  const send = useCallback(
+    async (rawText: string, opts: SendOptions = {}) => {
+      const text = rawText.trim();
+      if (!text) return;
+      if (text.length > COMPOSER_CAP) return;
+      if (sending) return;
+      const row = activeRow;
+      if (!row) {
+        setError({
+          code: "no_active_lead",
+          message: "Pick a lead from the queue first.",
+        });
+        return;
+      }
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setError(null);
+
+      const leadCtx: NonNullable<ChatMessage["leadContext"]> = {
+        id: row.id,
+        name: row.leadName,
+        title: row.title,
+        companyName: row.companyName,
+      };
+      const userMsg: ChatMessage = {
+        role: "user",
+        content: text,
+        leadContext: leadCtx,
+        exampleId: row.source === "exemplar" ? row.id : null,
+      };
+      const assistantPlaceholder: ChatMessage = {
+        role: "assistant",
+        content: "",
+      };
+
+      let workingId = activeConvoId;
+      let workingMessages: ChatMessage[];
+
+      if (workingId === null) {
+        const now = Date.now();
+        const id = newId();
+        const starterLabel = `${row.leadName}${row.title ? ` · ${row.title}` : ""}`;
+        const title = autoTitle([userMsg], starterLabel);
+        workingMessages = [userMsg, assistantPlaceholder];
+        const newConvo: StoredConversation = {
+          id,
+          title,
+          createdAt: now,
+          updatedAt: now,
+          messages: workingMessages,
+        };
+        workingId = id;
+        persistConversations((prev) => [newConvo, ...prev]);
+        setActiveConvoId(id);
+      } else {
+        const base =
+          opts.replaceFrom !== undefined
+            ? messages.slice(0, opts.replaceFrom)
+            : [...messages];
+        workingMessages = [...base, userMsg, assistantPlaceholder];
+        const captureId = workingId;
+        persistConversations((prev) =>
+          prev.map((c) =>
+            c.id === captureId
+              ? { ...c, messages: workingMessages, updatedAt: Date.now() }
+              : c,
+          ),
+        );
+      }
+
+      setComposer("");
+      setSending(true);
+
+      const removeTrailingAssistant = (id: string) =>
+        persistConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== id) return c;
+            const last = c.messages[c.messages.length - 1];
+            if (last?.role !== "assistant" || last.meta) return c;
+            return {
+              ...c,
+              messages: c.messages.slice(0, -1),
+              updatedAt: Date.now(),
+            };
+          }),
+        );
+
+      // API messages: include a small bracketed "About X" prefix on each
+      // user turn so the model can disambiguate cross-record questions
+      // referenced from past turns.
+      const apiMessages = workingMessages.slice(0, -1).map((m) => {
+        if (m.role !== "user" || !m.leadContext) {
+          return { role: m.role, content: m.content };
+        }
+        const tag = m.leadContext.title
+          ? `[About ${m.leadContext.name}, ${m.leadContext.title}]`
+          : `[About ${m.leadContext.name}]`;
+        return {
+          role: "user",
+          content: `${tag}\n\n${m.content}`,
+        };
+      });
+
+      let assistantText = "";
+      let assistantMeta: ChatMeta | undefined;
+      let errorEvent: ErrorState | null = null;
+      let terminal = false;
+      const targetId = workingId;
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            messages: apiMessages,
+            example_id: row.source === "exemplar" ? row.id : null,
+            context: {
+              lead_name: row.leadName,
+              profile: row.profile,
+              company: row.company,
+            },
+          }),
+          signal: controller.signal,
+        });
+        if (!res.ok || !res.body) {
+          setError({
+            code: `http_${res.status}`,
+            message: `Upstream returned ${res.status}.`,
+          });
+          removeTrailingAssistant(targetId);
+          return;
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let sep = buffer.indexOf("\n\n");
+          while (sep !== -1) {
+            const frame = buffer.slice(0, sep);
+            buffer = buffer.slice(sep + 2);
+            for (const line of frame.split("\n")) {
+              if (!line.startsWith("data:")) continue;
+              const json = line.slice(5).trim();
+              if (!json) continue;
+              try {
+                const event = JSON.parse(json) as
+                  | { type: "text"; delta: string }
+                  | { type: "done"; meta: ChatMeta }
+                  | { type: "error"; code: string; message: string };
+                if (event.type === "text") {
+                  assistantText += event.delta;
+                  setConversations((prev) =>
+                    prev.map((c) => {
+                      if (c.id !== targetId) return c;
+                      const msgs = [...c.messages];
+                      const last = msgs[msgs.length - 1];
+                      if (last?.role !== "assistant" || last.meta) return c;
+                      msgs[msgs.length - 1] = { ...last, content: assistantText };
+                      return { ...c, messages: msgs };
+                    }),
+                  );
+                } else if (event.type === "done") {
+                  assistantMeta = event.meta;
+                  terminal = true;
+                } else if (event.type === "error") {
+                  errorEvent = { code: event.code, message: event.message };
+                  terminal = true;
+                }
+              } catch {
+                // ignore malformed frame
+              }
+            }
+            sep = buffer.indexOf("\n\n");
+          }
+        }
+
+        if (errorEvent) {
+          setError(errorEvent);
+          removeTrailingAssistant(targetId);
+          return;
+        }
+
+        if (!terminal) {
+          setError({
+            code: "stream_ended",
+            message: "Stream ended without a completion event.",
+          });
+          removeTrailingAssistant(targetId);
+          return;
+        }
+
+        persistConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== targetId) return c;
+            const msgs = [...c.messages];
+            const lastIdx = msgs.length - 1;
+            const last = msgs[lastIdx];
+            if (last?.role !== "assistant") return c;
+            msgs[lastIdx] = {
+              ...last,
+              content: assistantText,
+              meta: assistantMeta,
+            };
+            return { ...c, messages: msgs, updatedAt: Date.now() };
+          }),
+        );
+      } catch (err) {
+        if ((err as Error).name === "AbortError") {
+          persistConversations((prev) =>
+            prev.map((c) => {
+              if (c.id !== targetId) return c;
+              const msgs = [...c.messages];
+              const lastIdx = msgs.length - 1;
+              const last = msgs[lastIdx];
+              if (last?.role !== "assistant" || last.meta) return c;
+              if (assistantText.length === 0) {
+                return {
+                  ...c,
+                  messages: msgs.slice(0, -1),
+                  updatedAt: Date.now(),
+                };
+              }
+              msgs[lastIdx] = {
+                ...last,
+                content: assistantText,
+                stopped: true,
+              };
+              return { ...c, messages: msgs, updatedAt: Date.now() };
+            }),
+          );
+          return;
+        }
+        setError({
+          code: "network",
+          message: (err as Error).message ?? "Network error",
+        });
+        removeTrailingAssistant(targetId);
+      } finally {
+        setSending(false);
+        if (abortRef.current === controller) abortRef.current = null;
+      }
+    },
+    [activeConvoId, activeRow, messages, persistConversations, sending],
+  );
+
+  const handleSendClick = useCallback(() => {
+    void send(composer);
+  }, [composer, send]);
+
+  const handleStop = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    setMessages([]);
-    setComposer("");
-    setPendingExampleId(null);
+  }, []);
+
+  const handleNewChat = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
     setSending(false);
+    setActiveConvoId(null);
+    setComposer("");
+    setEditingIndex(null);
+    setEditingDraft("");
     setError(null);
   }, []);
 
-  const onKey = useCallback(
+  const handleSelectConversation = useCallback(
+    (id: string) => {
+      if (id === activeConvoId) return;
+      abortRef.current?.abort();
+      abortRef.current = null;
+      setSending(false);
+      setEditingIndex(null);
+      setEditingDraft("");
+      setError(null);
+      setComposer("");
+      setActiveConvoId(id);
+    },
+    [activeConvoId],
+  );
+
+  const handleDeleteConversation = useCallback(
+    (id: string) => {
+      if (id === activeConvoId) {
+        abortRef.current?.abort();
+        abortRef.current = null;
+        setSending(false);
+        setActiveConvoId(null);
+        setEditingIndex(null);
+        setEditingDraft("");
+      }
+      persistConversations((prev) => prev.filter((c) => c.id !== id));
+    },
+    [activeConvoId, persistConversations],
+  );
+
+  const handleStartEdit = useCallback(
+    (index: number) => {
+      if (sending) return;
+      const target = messages[index];
+      if (!target || target.role !== "user") return;
+      setEditingIndex(index);
+      setEditingDraft(target.content);
+    },
+    [messages, sending],
+  );
+
+  const handleSaveEdit = useCallback(() => {
+    if (editingIndex === null) return;
+    const text = editingDraft.trim();
+    if (!text) return;
+    const idx = editingIndex;
+    setEditingIndex(null);
+    setEditingDraft("");
+    void send(text, { replaceFrom: idx });
+  }, [editingDraft, editingIndex, send]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingIndex(null);
+    setEditingDraft("");
+  }, []);
+
+  const onComposerKey = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        void send();
+        handleSendClick();
       }
     },
-    [send],
+    [handleSendClick],
   );
 
+  const lastMessage = messages[messages.length - 1];
+  const streamingIndex =
+    sending && lastMessage?.role === "assistant" && !lastMessage.meta
+      ? messages.length - 1
+      : -1;
+
   const trimmedLen = composer.trim().length;
-  const overCap = composer.length > INPUT_CAP;
-  const canSend = !sending && trimmedLen > 0 && !overCap;
+  const overCap = composer.length > COMPOSER_CAP;
+  const canSend = !sending && trimmedLen > 0 && !overCap && !!activeRow;
+
+  if (!loaded) {
+    return <main className={styles.page} aria-busy="true" />;
+  }
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerCopy}>
-          <h1 className={styles.title}>Talk through a lead</h1>
-          <p className={styles.lede}>
-            Paste a profile or describe the lead. Ask follow-ups, qualify
-            against the ICP, and walk away with a draft outreach hook.
-          </p>
-        </div>
-        <button
-          type="button"
-          className={`${styles.metricsToggle} ${
-            showMetrics ? styles.metricsToggleActive : ""
-          }`}
-          onClick={() => setShowMetrics((v) => !v)}
-          aria-pressed={showMetrics}
-        >
-          {showMetrics ? "Hide metrics" : "Show metrics"}
-        </button>
+      <header className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Lead queue</h1>
+        <p className={styles.pageLede}>
+          Click a lead to focus the assistant on it, then ask follow-ups,
+          compare candidates, or draft outreach. Set a status when you&rsquo;ve
+          decided.
+        </p>
       </header>
 
-      <section className={styles.thread} ref={threadRef} aria-live="polite">
-        {messages.length === 0 ? (
-          <div className={styles.emptyState}>
-            <p className={styles.emptyHint}>
-              Try one of these to get started, or paste your own profile below.
-            </p>
-            <div className={styles.starters}>
-              {EXEMPLARS.map((ex) => {
-                const copy = STARTER_COPY[ex.id] ?? {
-                  label: ex.label,
-                  teaser: ex.teaser,
-                };
-                return (
-                  <button
-                    type="button"
-                    className={styles.starter}
-                    onClick={() => useStarter(ex)}
-                    key={ex.id}
-                  >
-                    <span className={styles.starterLabel}>{copy.label}</span>
-                    <span className={styles.starterTeaser}>{copy.teaser}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className={styles.messages}>
-            {messages.map((m, i) => (
-              <MessageBubble key={i} message={m} showMetrics={showMetrics} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {error && (
-        <div className={styles.errorBanner} role="alert">
-          <strong>{error.code}</strong> · {error.message}
-        </div>
-      )}
-
-      <section className={styles.composerCard}>
-        <textarea
-          ref={composerRef}
-          value={composer}
-          onChange={(e) => {
-            setComposer(e.target.value);
-            if (pendingExampleId) setPendingExampleId(null);
-          }}
-          onKeyDown={onKey}
-          placeholder="Paste a profile (and optionally a company description), or pick a starter above."
-          rows={6}
-          disabled={sending}
-          aria-label="Message"
-        />
-        <div className={styles.composerRow}>
-          {composer.length >= COUNTER_THRESHOLD && (
-            <span
-              className={`${styles.counter} ${
-                overCap ? styles.counterOver : ""
-              }`}
-              aria-live="polite"
-            >
-              {formatNumber(composer.length)} / {formatNumber(INPUT_CAP)} chars
-              {overCap && " — over cap"}
+      <div className={styles.layout}>
+        <section className={styles.queue}>
+          <div className={styles.queueHeader}>
+            <span className={styles.queueLabel}>
+              {leads.length} lead{leads.length === 1 ? "" : "s"}
             </span>
-          )}
-          <span className={styles.privacy}>Inputs are not stored.</span>
-          <div className={styles.composerActions}>
-            {messages.length > 0 && (
-              <button
-                type="button"
-                className={styles.resetButton}
-                onClick={resetConversation}
-                disabled={sending}
-              >
-                New conversation
-              </button>
-            )}
             <button
               type="button"
-              className={styles.sendButton}
-              onClick={() => void send()}
-              disabled={!canSend}
+              className={styles.queueAddToggle}
+              onClick={() => setPasteOpen((v) => !v)}
+              aria-expanded={pasteOpen}
             >
-              {sending ? "Sending…" : "Send"}
+              {pasteOpen ? "Cancel" : "+ Add lead"}
             </button>
           </div>
-        </div>
-      </section>
 
-      {showMetrics && <TotalsBar totals={totals} />}
+          {pasteOpen && (
+            <PasteComposer
+              profile={pasteProfile}
+              company={pasteCompany}
+              onProfileChange={setPasteProfile}
+              onCompanyChange={setPasteCompany}
+              onAdd={() =>
+                handleAddPaste(
+                  pasteProfile,
+                  pasteCompany.trim() ? pasteCompany : null,
+                )
+              }
+            />
+          )}
+
+          <ol className={styles.leadList}>
+            {leads.map((lead) => (
+              <li key={lead.id}>
+                <LeadRowCard
+                  lead={lead}
+                  active={lead.id === activeRowId}
+                  onSelect={() => handleSelectRow(lead.id)}
+                  onStatusChange={(s) => handleStatusChange(lead.id, s)}
+                />
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <aside className={styles.panel}>
+          <header className={styles.panelHeader}>
+            <span className={styles.panelIdent}>
+              <span className={styles.avatar} aria-hidden="true">
+                L
+              </span>
+              <span className={styles.panelName}>Lead Copilot</span>
+            </span>
+            <div className={styles.panelActions}>
+              <button
+                type="button"
+                className={styles.panelAction}
+                onClick={handleNewChat}
+                disabled={!activeConvo && messages.length === 0}
+              >
+                + New chat
+              </button>
+              <HistoryMenu
+                conversations={conversations}
+                activeId={activeConvoId}
+                onSelect={handleSelectConversation}
+                onDelete={handleDeleteConversation}
+              />
+            </div>
+          </header>
+
+          <div className={styles.panelContext}>
+            {activeRow ? (
+              <>
+                <span className={styles.panelContextLabel}>Active</span>
+                <span className={styles.panelContextValue}>
+                  {leadDescriptor(activeRow)}
+                </span>
+              </>
+            ) : (
+              <span className={styles.panelContextEmpty}>
+                Click a lead from the queue to focus the assistant.
+              </span>
+            )}
+          </div>
+
+          <section className={styles.thread} ref={threadRef} aria-live="polite">
+            {messages.length === 0 ? (
+              <div className={styles.threadEmpty}>
+                {activeRow ? (
+                  <p>
+                    Ask anything about {activeRow.leadName}. Try &ldquo;qualify
+                    against the ICP,&rdquo; &ldquo;draft an outreach hook,&rdquo;
+                    or compare with a lead you discussed earlier.
+                  </p>
+                ) : (
+                  <p>No lead selected yet.</p>
+                )}
+              </div>
+            ) : (
+              <div className={styles.messages}>
+                {messages.map((m, i) => (
+                  <MessageBubble
+                    key={i}
+                    message={m}
+                    showMetrics={showMetrics}
+                    editing={editingIndex === i}
+                    editingDraft={editingIndex === i ? editingDraft : ""}
+                    onEditDraftChange={setEditingDraft}
+                    onStartEdit={() => handleStartEdit(i)}
+                    onSaveEdit={handleSaveEdit}
+                    onCancelEdit={handleCancelEdit}
+                    isStreaming={i === streamingIndex}
+                    onStop={i === streamingIndex ? handleStop : undefined}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {error && (
+            <div className={styles.errorBanner} role="alert">
+              <strong>{error.code}</strong> · {error.message}
+            </div>
+          )}
+
+          {gettingLong && !sending && (
+            <div className={styles.gettingLongBanner} role="status">
+              <span>
+                Conversation getting long. A new chat helps the assistant focus.
+              </span>
+              <button
+                type="button"
+                className={styles.gettingLongAction}
+                onClick={handleNewChat}
+              >
+                New chat
+              </button>
+            </div>
+          )}
+
+          <section className={styles.composerCard}>
+            <textarea
+              ref={composerRef}
+              value={composer}
+              onChange={(e) => setComposer(e.target.value)}
+              onKeyDown={onComposerKey}
+              placeholder={
+                activeRow
+                  ? `Ask about ${activeRow.leadName}…`
+                  : "Pick a lead from the queue to start."
+              }
+              rows={4}
+              disabled={sending || !activeRow}
+              aria-label="Message"
+            />
+            <div className={styles.composerRow}>
+              <div className={styles.privacyWrap}>
+                <button
+                  type="button"
+                  className={styles.privacyToggle}
+                  onClick={() => setPrivacyOpen((v) => !v)}
+                  onBlur={() => setPrivacyOpen(false)}
+                  aria-expanded={privacyOpen}
+                  aria-label="Privacy info"
+                >
+                  ⓘ
+                </button>
+                {privacyOpen && (
+                  <div className={styles.privacyTooltip} role="tooltip">
+                    Conversations are saved in your browser only — never to our
+                    servers. Each profile is sent to Anthropic for analysis
+                    under their API data policy.{" "}
+                    <Link href="/privacy">More</Link>
+                  </div>
+                )}
+              </div>
+              {overCap && (
+                <span className={styles.counterOver} aria-live="polite">
+                  {formatNumber(composer.length)} / {formatNumber(COMPOSER_CAP)}{" "}
+                  chars — over cap
+                </span>
+              )}
+              <button
+                type="button"
+                className={styles.sendButton}
+                onClick={handleSendClick}
+                disabled={!canSend}
+              >
+                {sending ? "Sending…" : "Send"}
+              </button>
+            </div>
+          </section>
+
+          {showMetrics && <TotalsBar totals={totals} />}
+
+          <footer className={styles.panelFoot}>
+            <button
+              type="button"
+              className={styles.diagnosticsLink}
+              onClick={() => setShowMetrics((v) => !v)}
+              aria-pressed={showMetrics}
+            >
+              {showMetrics ? "Hide diagnostics" : "Diagnostics"}
+            </button>
+          </footer>
+        </aside>
+      </div>
     </main>
   );
 }
 
-function MessageBubble({
-  message,
-  showMetrics,
+function LeadRowCard({
+  lead,
+  active,
+  onSelect,
+  onStatusChange,
 }: {
-  message: ChatMessage;
-  showMetrics: boolean;
+  lead: LeadRow;
+  active: boolean;
+  onSelect: () => void;
+  onStatusChange: (s: LeadStatus) => void;
 }) {
-  const isUser = message.role === "user";
-  const isStreaming = !isUser && !message.meta && message.content.length === 0;
   return (
-    <article
-      className={`${styles.bubble} ${
-        isUser ? styles.bubbleUser : styles.bubbleAssistant
+    <div
+      className={`${styles.leadRow} ${active ? styles.leadRowActive : ""} ${
+        styles[`leadRowStatus_${lead.status}`] ?? ""
       }`}
+      data-status={lead.status}
     >
-      <header className={styles.bubbleHeader}>
-        {isUser ? "You" : "Assistant"}
-      </header>
-      <div className={styles.bubbleBody}>
-        {message.content ? (
-          message.content
-        ) : isStreaming ? (
-          <span className={styles.streamingDot} aria-label="streaming">
-            …
-          </span>
-        ) : (
-          ""
+      <button
+        type="button"
+        className={styles.leadRowSelect}
+        onClick={onSelect}
+        aria-pressed={active}
+      >
+        <span className={styles.leadName}>{lead.leadName}</span>
+        {lead.title && <span className={styles.leadTitle}>{lead.title}</span>}
+        {lead.companyName && (
+          <span className={styles.leadCompany}>{lead.companyName}</span>
         )}
-        {!isUser && !message.meta && message.content && (
-          <span className={styles.streamingCaret} aria-hidden="true">
-            ▍
+      </button>
+      <select
+        className={`${styles.statusPill} ${
+          styles[`statusPill_${lead.status}`] ?? ""
+        }`}
+        value={lead.status}
+        onChange={(e) => onStatusChange(e.target.value as LeadStatus)}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Status for ${lead.leadName}`}
+      >
+        {STATUS_ORDER.map((s) => (
+          <option key={s} value={s}>
+            {STATUS_LABELS[s]}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function PasteComposer({
+  profile,
+  company,
+  onProfileChange,
+  onCompanyChange,
+  onAdd,
+}: {
+  profile: string;
+  company: string;
+  onProfileChange: (s: string) => void;
+  onCompanyChange: (s: string) => void;
+  onAdd: () => void;
+}) {
+  const profileOver = profile.length > PROFILE_CAP;
+  const companyOver = company.length > COMPANY_CAP;
+  const canAdd =
+    profile.trim().length > 0 && !profileOver && !companyOver;
+  return (
+    <div className={styles.pasteCard}>
+      <label className={styles.pasteField}>
+        <span className={styles.pasteLabel}>
+          Profile
+          <span className={profileOver ? styles.counterOver : styles.muted}>
+            {profile.length} / {PROFILE_CAP}
           </span>
-        )}
+        </span>
+        <textarea
+          value={profile}
+          onChange={(e) => onProfileChange(e.target.value)}
+          placeholder="Paste a LinkedIn-style profile…"
+          rows={4}
+        />
+      </label>
+      <label className={styles.pasteField}>
+        <span className={styles.pasteLabel}>
+          Company <span className={styles.muted}>(optional)</span>
+          <span className={companyOver ? styles.counterOver : styles.muted}>
+            {company.length} / {COMPANY_CAP}
+          </span>
+        </span>
+        <textarea
+          value={company}
+          onChange={(e) => onCompanyChange(e.target.value)}
+          placeholder="Paste a company description…"
+          rows={3}
+        />
+      </label>
+      <div className={styles.pasteFoot}>
+        <span className={styles.muted}>Conversations saved in your browser.</span>
+        <button
+          type="button"
+          className={styles.sendButton}
+          onClick={onAdd}
+          disabled={!canAdd}
+        >
+          Add to queue
+        </button>
       </div>
-      {message.meta && showMetrics && (
-        <footer className={styles.bubbleMeta}>
-          <span>{formatNumber(message.meta.latency_ms)} ms</span>
-          <span aria-hidden="true">·</span>
-          <span>{formatNumber(message.meta.tokens_in)} in</span>
-          <span aria-hidden="true">·</span>
-          <span>{formatNumber(message.meta.tokens_out)} out</span>
-          <span aria-hidden="true">·</span>
-          <span>turn {message.meta.turn_count}</span>
-          {message.meta.cache_hit && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span>cache hit</span>
-            </>
-          )}
-        </footer>
-      )}
-    </article>
+    </div>
   );
 }
 
 function TotalsBar({
   totals,
 }: {
-  totals: { turns: number; latency: number; tokensIn: number; tokensOut: number };
+  totals: {
+    turns: number;
+    latency: number;
+    tokensIn: number;
+    tokensOut: number;
+  };
 }) {
   if (totals.turns === 0) return null;
   return (

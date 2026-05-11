@@ -17,11 +17,13 @@ export default function HomePage() {
       </p>
       <h1>Lead enrichment, built two ways</h1>
       <p style={{ color: "var(--muted)", maxWidth: "62ch" }}>
-        Same model, same input, two output contracts. The integrated build runs
-        Sonnet 4.6 through a strict tool schema with extended thinking; the chat
-        build is a system-prompted Sonnet 4.6 with no tools, no schema, no
-        grounding rule. Paste a profile, watch both UIs handle it, then read the
-        eval scorecard.
+        Two realistic products, same model, same UI polish. The integrated
+        build runs Sonnet 4.6 through a strict tool schema with extended
+        thinking and a claim-grounding rule. The chat build runs the same
+        model with a task-describing system prompt and no tools, no schema,
+        no grounding rule. Paste a profile, watch both UIs handle it, then
+        read the eval scorecard. Neither side is a strawman — the asymmetry
+        sits at the model-side contract.
       </p>
       <ul
         style={{

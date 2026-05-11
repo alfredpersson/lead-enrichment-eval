@@ -16,6 +16,7 @@ from typing import Any, AsyncIterator
 
 from anthropic import AsyncAnthropic
 
+from services.config import is_local
 from services.embeddings import embed
 from services.prompts import chat_system_blocks
 from services.telemetry import write_request_row
@@ -88,10 +89,13 @@ async def chat_stream(
     latency_ms = int((time.perf_counter() - started) * 1000)
     output_text = "".join(output_text_parts)
 
-    embed_text = output_text or " ".join(
-        m.get("content", "") for m in messages if isinstance(m.get("content"), str)
-    )
-    embedding = await embed(embed_text or " ")
+    if is_local():
+        embedding = None
+    else:
+        embed_text = output_text or " ".join(
+            m.get("content", "") for m in messages if isinstance(m.get("content"), str)
+        )
+        embedding = await embed(embed_text or " ")
 
     await write_request_row(
         {

@@ -11,6 +11,8 @@ import os
 
 import voyageai
 
+from services.config import is_local
+
 EMBED_MODEL = "voyage-3"
 EMBED_DIM = 1024
 
@@ -35,6 +37,8 @@ async def embed(text: str, *, input_type: str = "document") -> list[float]:
 
 async def find_neighbours(text: str, k: int = 3) -> list[dict]:
     """Return up to k nearest test-set items by cosine similarity."""
+    if is_local():
+        return []
     from services.db import connection
 
     vec = await embed(text, input_type="query")

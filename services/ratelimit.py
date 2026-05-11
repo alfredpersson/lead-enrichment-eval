@@ -11,6 +11,8 @@ import time
 
 from upstash_redis.asyncio import Redis
 
+from services.config import is_local
+
 _client: Redis | None = None
 _DEFAULT_LIMIT = 10
 _DEFAULT_WINDOW_SECS = 60
@@ -38,6 +40,8 @@ async def check_and_consume(
     Increment the counter for (ip, bucket) and return (allowed, remaining).
     Counter expires `window_secs` after first increment in the window.
     """
+    if is_local():
+        return True, limit
     client = _get_client()
     key = f"rl:{bucket}:{ip}:{int(time.time()) // window_secs}"
     count = await client.incr(key)

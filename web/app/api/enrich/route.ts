@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { modalUrl } from "@/lib/modal";
 
 export const runtime = "nodejs";
@@ -17,9 +16,12 @@ export async function POST(req: Request) {
     },
     body,
   });
-  const text = await upstream.text();
-  return new NextResponse(text, {
+  return new Response(upstream.body, {
     status: upstream.status,
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache, no-transform",
+      connection: "keep-alive",
+    },
   });
 }

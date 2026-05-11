@@ -26,6 +26,7 @@ venv/
 
 # Local env
 .env
+.env.local
 .env.*.local
 
 # Misc

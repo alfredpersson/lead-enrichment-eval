@@ -3,29 +3,48 @@ import Link from "next/link";
 export default function HomePage() {
   return (
     <main>
-      <h1>Lead enrichment — integrated vs. chat</h1>
-      <p>
-        A B2B lead enrichment feature, built two ways. Same model, different
-        output contracts. Paste a profile and a company, watch both UIs handle
-        it, then read the eval scorecard.
+      <p
+        style={{
+          fontSize: "0.7rem",
+          fontWeight: 700,
+          letterSpacing: "0.15em",
+          textTransform: "uppercase",
+          color: "var(--amber)",
+          margin: "0 0 0.35rem",
+        }}
+      >
+        Live demo
       </p>
-      <ul>
+      <h1>Lead enrichment, built two ways</h1>
+      <p style={{ color: "var(--muted)", maxWidth: "62ch" }}>
+        Same model, same input, two output contracts. The integrated build runs
+        Sonnet 4.6 through a strict tool schema with extended thinking; the chat
+        build is a system-prompted Sonnet 4.6 with no tools, no schema, no
+        grounding rule. Paste a profile, watch both UIs handle it, then read the
+        eval scorecard.
+      </p>
+      <ul
+        style={{
+          listStyle: "none",
+          padding: 0,
+          margin: "1.5rem 0",
+          display: "grid",
+          gap: "0.5rem",
+        }}
+      >
         <li>
-          <Link href="/integrated">Integrated build →</Link>
+          <Link href="/integrated">→ Integrated build</Link>
         </li>
         <li>
-          <Link href="/chat">Chat build →</Link>
+          <Link href="/chat">→ Chat build</Link>
         </li>
         <li>
-          <Link href="/scorecard">Eval scorecard →</Link>
+          <Link href="/scorecard">→ Eval scorecard</Link>
         </li>
         <li>
-          <Link href="/methodology">Methodology →</Link>
+          <Link href="/methodology">→ Methodology</Link>
         </li>
       </ul>
-      <p style={{ opacity: 0.6, fontSize: "0.9rem" }}>
-        Phase 1 scaffold. UI lands in Phase 2/3.
-      </p>
     </main>
   );
 }

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "sync-eval-snapshot": "node scripts/sync-eval-snapshot.mjs",
+    "predev": "npm run sync-eval-snapshot",
+    "prebuild": "npm run sync-eval-snapshot",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

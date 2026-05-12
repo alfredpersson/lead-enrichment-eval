@@ -1,0 +1,280 @@
+.page {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.header {
+  display: grid;
+  gap: 0.4rem;
+  max-width: 70ch;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0;
+}
+
+.lede {
+  color: var(--muted);
+  margin: 0;
+}
+
+.section {
+  display: grid;
+  gap: 1rem;
+}
+
+.section h2 {
+  margin: 0;
+}
+
+.note {
+  color: var(--muted);
+  max-width: 70ch;
+  margin: 0;
+}
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.85em;
+  background: rgba(27, 42, 78, 0.06);
+  padding: 0.05em 0.4em;
+  border-radius: 4px;
+}
+
+.headlineGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+
+.headlineCard {
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 0.4rem;
+}
+
+.headlineCard h3 {
+  font-size: 0.85rem;
+  margin: 0 0 0.2rem;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.help {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.headlineValues {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.headlineValues > div {
+  display: grid;
+  gap: 0;
+}
+
+.headlineValues dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.headlineValues dd {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+}
+
+.delta {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.deltaUp {
+  color: #2f7a3d;
+}
+
+.deltaDown {
+  color: var(--danger);
+}
+
+.deltaEq {
+  color: var(--muted);
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 880px) {
+  .modeGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modeColumn {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.modeColumn h3 {
+  margin: 0;
+}
+
+.kv {
+  margin: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.kvRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.25rem 0;
+  border-bottom: 1px dashed var(--border-soft);
+}
+
+.kvRow:last-child {
+  border-bottom: none;
+}
+
+.kvRow dt {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.kvRow dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dims summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--amber);
+}
+
+.dims summary:hover {
+  color: var(--navy);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: rgba(27, 42, 78, 0.04);
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.timelineDate {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.timelineMetric {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.timelineDelta {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #2f7a3d;
+}
+
+.failures {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.failures > li {
+  border-left: 2px solid var(--amber);
+  padding-left: 0.7rem;
+}
+
+.failures ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.82rem;
+}

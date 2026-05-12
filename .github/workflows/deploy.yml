@@ -3,6 +3,8 @@ name: Deploy
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "data/eval_runs/**"
   workflow_dispatch:
 
 jobs:

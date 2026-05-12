@@ -29,6 +29,9 @@ venv/
 .env.local
 .env.*.local
 
+# Web build-time eval snapshot copies (canonical lives in data/eval_runs/)
+web/public/eval/
+
 # Misc
 .DS_Store
 *.pem

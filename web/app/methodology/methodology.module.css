@@ -1,0 +1,110 @@
+.page {
+  display: grid;
+  gap: 2rem;
+  max-width: 75ch;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 0.35rem;
+}
+
+.lede {
+  color: var(--muted);
+  margin: 0;
+}
+
+.section {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.section h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+  letter-spacing: -0.005em;
+}
+
+.section h3 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+
+.section p {
+  margin: 0;
+}
+
+.section ul,
+.section ol {
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.toc {
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem 1rem 2rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.toc ol {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.toc a {
+  color: var(--navy);
+}
+
+.toc a:hover,
+.toc a:focus-visible {
+  color: var(--amber);
+  text-decoration: none;
+}
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.85em;
+  background: rgba(27, 42, 78, 0.06);
+  padding: 0.05em 0.4em;
+  border-radius: 4px;
+}
+
+.callout {
+  border-left: 3px solid var(--amber);
+  padding: 0.6rem 0.85rem;
+  background: var(--amber-soft);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--navy);
+  font-size: 0.92rem;
+}
+
+.section dl {
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.section dt {
+  font-size: 0.92rem;
+  color: var(--navy);
+}
+
+.section dd {
+  margin: 0.2rem 0 0;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--border-soft);
+  color: var(--muted);
+  font-size: 0.92rem;
+}

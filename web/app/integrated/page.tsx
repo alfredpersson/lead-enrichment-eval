@@ -300,7 +300,7 @@ function UnderTheHood({
             <p className={styles.subPanelLabel}>Eval neighbours</p>
             {m.eval_neighbours.length === 0 ? (
               <p className={styles.muted}>
-                Test set not seeded yet (Phase 0b/4).
+                Test set not seeded yet.
               </p>
             ) : (
               <div className={styles.neighbours}>

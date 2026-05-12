@@ -1,0 +1,68 @@
+name: Nightly eval
+
+on:
+  schedule:
+    # 02:00 UTC. Matches the methodology page.
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Snapshot filename suffix (optional)."
+        required: false
+        type: string
+      robustness:
+        description: "Robustness pass scope."
+        required: false
+        default: "full"
+        type: choice
+        options: [full, quick, none]
+
+jobs:
+  eval:
+    name: Run eval and commit snapshot
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    concurrency:
+      group: eval-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Allow `git push` to use the workflow token's permissions.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -e ".[dev,eval]"
+      - name: Run eval
+        env:
+          APP_ENV: local
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_GROUNDING_MODEL: ${{ vars.OPENAI_GROUNDING_MODEL }}
+          OPENAI_HOOK_MODEL: ${{ vars.OPENAI_HOOK_MODEL }}
+        run: |
+          python -m services.eval.runner \
+            ${{ inputs.tag && format('--tag {0}', inputs.tag) || '' }} \
+            --robustness ${{ inputs.robustness || 'full' }}
+      - name: Commit snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/eval_runs/*.json
+          if git diff --cached --quiet; then
+            echo "No snapshot changes to commit."
+            exit 0
+          fi
+          git commit -m "Nightly eval snapshot $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          # Pull-with-rebase to avoid races against concurrent main pushes.
+          git pull --rebase origin main
+          git push origin HEAD:main

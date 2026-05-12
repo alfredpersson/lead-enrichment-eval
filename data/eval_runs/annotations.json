@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "annotations": [],
+  "_schema_note": "Each annotation is one dated incident in the eval-and-fix loop. The scorecard renders these as a timeline alongside the headline metrics. Shape: { date: 'YYYY-MM-DD', metric: 'substring_grounding_rate' | 'action_accuracy' | ..., perturbation_class: 'injection' | 'typos' | 'paraphrase' | null, failure_summary: string, fix_summary: string, pre_fix_snapshot: 'data/eval_runs/<file>.json', post_fix_snapshot: 'data/eval_runs/<file>.json', pre_fix_value: number, post_fix_value: number }"
+}

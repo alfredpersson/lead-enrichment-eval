@@ -443,20 +443,55 @@ export default function MethodologyPage() {
       <section id="cross-mode" className={styles.section}>
         <h2>9. Cross-mode comparison framing</h2>
         <p>
-          The model is held constant. Sonnet 4.6 with thinking on (integrated)
-          vs thinking off (chat) is the matched comparison. The asymmetry
-          sits at the model-side contract — tool schema, claim-grounding
-          rule, structured output — not at &ldquo;structured app vs thin
-          chat.&rdquo; The chat build is polished to the same product
-          standard as integrated.
+          This is a <strong>bundle-vs-bundle</strong> comparison, not a
+          controlled A/B test of contract discipline alone. The two builds
+          differ in four ways at once:
+        </p>
+        <ul>
+          <li>
+            <strong>Output contract:</strong> strict{" "}
+            <code className={styles.code}>enrich_lead</code> tool schema
+            (integrated) vs free-form prose (chat).
+          </li>
+          <li>
+            <strong>Grounding requirement:</strong> per-claim{" "}
+            <code className={styles.code}>source_quote</code> required by the
+            schema (integrated) vs no structural requirement (chat).
+          </li>
+          <li>
+            <strong>Inference shape:</strong> single structured call
+            (integrated) vs multi-turn chat plus a Haiku 4.5 extractor pass
+            that maps prose back to the schema (chat).
+          </li>
+          <li>
+            <strong>Extended thinking:</strong> 4000-token budget on
+            (integrated) vs off (chat).
+          </li>
+        </ul>
+        <p>
+          The scorecard treats these as one bundle because that is what a
+          product team actually ships. Chat surfaces do not typically expose
+          thinking deltas in the UI — the affordance does not fit. Structured
+          backends often do. The realistic comparison is product-surface-A vs
+          product-surface-B, not contract-vs-contract under matched compute.
+          The chat build is polished to the same product standard as
+          integrated; neither side is a strawman.
+        </p>
+        <p>
+          A stricter version of this question — &ldquo;does the schema
+          discipline win even with thinking equal?&rdquo; — would run both
+          modes with thinking matched (both on, or both off). That is a
+          separate, sharper claim that the current eval does not make. It is
+          on the roadmap as a second panel; the result would either reinforce
+          the contract argument or expose how much of the delta is thinking.
         </p>
         <p>
           The chat build&apos;s free-form output is parsed back to the
-          structured schema by a Haiku 4.5 extractor pass, so both modes
-          score against the same gold labels. The extractor sees the chat
-          output only, never the original input — it cannot hallucinate
-          grounding. If the chat reply omitted a source quote, no extracted
-          claim has one either.
+          structured schema by the Haiku 4.5 extractor pass mentioned above,
+          so both modes score against the same gold labels. The extractor
+          sees the chat output only, never the original input — it cannot
+          hallucinate grounding. If the chat reply omitted a source quote,
+          no extracted claim has one either.
         </p>
       </section>
 

@@ -11,6 +11,7 @@ from services.eval.judges import (
     _cohen_kappa,
     _parse_hook_payload,
     _parse_json_payload,
+    judge_grounding,
 )
 
 
@@ -138,3 +139,56 @@ def test_substring_filter_excludes_failures_from_kappa(monkeypatch):
         [bool(j.opus_grounded) for j in naive_paired],
         [bool(j.openai_grounded) for j in naive_paired],
     )
+
+
+async def test_headline_rate_ignores_unconfigured_openai_judge(monkeypatch):
+    """When OPENAI_API_KEY is unset, the OpenAI judge must not contribute to
+    openai_rate or headline_rate — including on substring-failing claims.
+    Regression for the bug where substring failures short-circuited to
+    openai_grounded=False before the no-client check, dragging
+    headline_rate to 0.0 even though the Opus judge was healthy.
+    """
+
+    async def fake_opus(client, item, claim, sem):
+        return True, "ok"
+
+    monkeypatch.setattr(
+        "services.eval.judges._opus_judge_claim", fake_opus
+    )
+
+    item = EvalItem(
+        id="1",
+        kind="exemplar",
+        scenario="t",
+        label="t",
+        profile="Maya is VP Product.",
+        company=None,
+        gold={"expected_action": "auto_add", "input_lang": "en"},
+    )
+    outputs = {
+        "1": {
+            "claims": [
+                {"text": "Maya is VP Product.", "source_quote": "Maya is VP Product."},
+                {"text": "Maya is CTO.", "source_quote": "fabricated quote"},
+            ]
+        }
+    }
+
+    class _StubAnthropic:
+        async def close(self):
+            pass
+
+    result = await judge_grounding(
+        {"1": item},
+        outputs,
+        anthropic_client=_StubAnthropic(),
+        openai_client=None,
+    )
+    assert result.opus_rate == pytest.approx(0.5)  # 1 grounded / 2 total
+    assert result.openai_rate is None, (
+        "openai_rate must be None when the OpenAI judge wasn't configured; "
+        "substring-fail claims must not populate openai_grounded as False"
+    )
+    assert result.headline_rate == pytest.approx(result.opus_rate)
+    # Both judgements must carry openai_grounded=None, not False.
+    assert all(j.openai_grounded is None for j in result.judgements)

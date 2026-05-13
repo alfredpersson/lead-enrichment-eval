@@ -23,7 +23,9 @@ export default function HomePage() {
         model with a task-describing system prompt and no tools, no schema,
         no grounding rule. Paste a profile, watch both UIs handle it, then
         read the eval scorecard. Neither side is a strawman — the asymmetry
-        sits at the model-side contract.
+        is the product bundle (schema, grounding, thinking) versus the chat
+        affordance, not app polish. The methodology page names every
+        difference.
       </p>
       <ul
         style={{

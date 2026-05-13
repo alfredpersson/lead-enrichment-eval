@@ -36,8 +36,9 @@ INTEGRATED_THINKING_BUDGET = 4000
 INTEGRATED_MAX_TOKENS = 4096
 CHAT_MAX_TOKENS = 2048
 
-LIVE_CONCURRENCY = 6
+LIVE_CONCURRENCY = 2
 REQUEST_TIMEOUT_S = 120
+MAX_RETRIES = 6
 
 
 @dataclass
@@ -82,7 +83,7 @@ def _client() -> AsyncAnthropic:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY is not set")
-    return AsyncAnthropic(api_key=api_key, timeout=REQUEST_TIMEOUT_S)
+    return AsyncAnthropic(api_key=api_key, timeout=REQUEST_TIMEOUT_S, max_retries=MAX_RETRIES)
 
 
 def _user_message(profile: str, company: str | None) -> str:

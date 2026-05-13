@@ -1,0 +1,63 @@
+name: PR anchor gate
+
+# Cheap regression check for the 10-item anchor set. Runs on PRs that
+# touch the prompt, mode behavior, scoring, eval logic, or the anchor
+# files themselves. Hard-fails on any per-item regression against
+# data/eval_runs/anchor_baseline.json. The full 73-item snapshot stays
+# on the nightly cron (eval.yml); this gate is the fast feedback loop.
+
+on:
+  pull_request:
+    paths:
+      - "services/prompts.py"
+      - "services/enrich.py"
+      - "services/chat.py"
+      - "services/scoring.py"
+      - "services/eval/**"
+      - "scripts/check_anchor_baseline.py"
+      - "data/exemplars.json"
+      - "data/eval_runs/anchor_items.txt"
+      - "data/eval_runs/anchor_baseline.json"
+      - "pyproject.toml"
+      - ".github/workflows/eval-pr.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: eval-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  anchor-gate:
+    name: Anchor regression gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Run anchor eval
+        env:
+          APP_ENV: local
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -m services.eval.runner \
+            --items @data/eval_runs/anchor_items.txt \
+            --skip-judges \
+            --robustness none \
+            --tag pr-check
+      - name: Upload snapshot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-check-snapshot
+          path: |
+            data/eval_runs/*pr-check.json
+            data/eval_runs/latest.json
+      - name: Compare against anchor baseline
+        run: |
+          python -m scripts.check_anchor_baseline \
+            | tee -a "$GITHUB_STEP_SUMMARY"

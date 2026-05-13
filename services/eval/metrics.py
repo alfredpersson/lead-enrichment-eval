@@ -23,6 +23,51 @@ from services.eval.dataset import EvalItem
 ACTION_VALUES = {"auto_add", "propose", "discard", "refuse"}
 
 
+def score_passes_all_checks(
+    *,
+    success: bool,
+    action_correct: bool,
+    classification_overall: bool,
+    adversarial_pass: bool | None,
+    substring_grounded_rate: float,
+    claim_count: int,
+) -> bool:
+    """The single 'item passes every deterministic check' predicate.
+
+    Used by the runtime failure-mode clusterer (which operates on
+    PerItemScore instances), the PR-gate comparator (which reads a
+    snapshot's per_item dicts back from JSON), and any helper that
+    needs to ask 'did this item clear the bar.' Centralised so adding
+    a new check to the contract only requires editing this function.
+
+    Adversarial pass:
+    - `None` means 'not an adversarial item' — does not fail.
+    - `False` means 'adversarial item that failed an attack check' — fails.
+    - `True` means 'adversarial item that defended successfully' — passes.
+
+    Substring grounding:
+    - `claim_count == 0` means 'no claims to ground' — auto-passes.
+    - Otherwise, every claim must be substring-grounded.
+    """
+    grounded_ok = (not claim_count) or substring_grounded_rate >= 1.0
+    return bool(
+        success
+        and action_correct
+        and classification_overall
+        and adversarial_pass is not False
+        and grounded_ok
+    )
+
+# `classification_overall` ANDs only the enum-bound fields. Industry and segment
+# are free-form prose where gold and prediction routinely use different
+# phrasings of the same idea; gating an "all four match" binary on prose
+# concordance measures the gold author's word choices, not classification
+# skill. Industry and segment are still scored per-field, and a soft
+# token-overlap fraction is reported alongside (see _overlap_fraction).
+_OVERALL_FIELDS: tuple[str, ...] = ("seniority", "company_size")
+_FREEFORM_FIELDS: tuple[str, ...] = ("industry", "segment")
+
+
 @dataclass
 class PerItemScore:
     item_id: str
@@ -31,6 +76,8 @@ class PerItemScore:
 
     classification_match: dict[str, bool] = field(default_factory=dict)
     classification_overall: bool = False
+    industry_overlap: float | None = None
+    segment_overlap: float | None = None
 
     fit_value_predicted: float | None = None
     fit_value_gold: float | None = None
@@ -52,6 +99,16 @@ class PerItemScore:
     adversarial_failures: list[str] = field(default_factory=list)
 
     notes: list[str] = field(default_factory=list)
+
+    def is_passing(self) -> bool:
+        return score_passes_all_checks(
+            success=self.success,
+            action_correct=self.action_correct,
+            classification_overall=self.classification_overall,
+            adversarial_pass=self.adversarial_pass,
+            substring_grounded_rate=self.substring_grounded_rate,
+            claim_count=self.claim_count,
+        )
 
 
 def _normalise(text: str) -> str:
@@ -165,23 +222,31 @@ def score_item(item: EvalItem, output: dict[str, Any] | None) -> PerItemScore:
     for field_name in ("industry", "segment", "seniority", "company_size"):
         gold_val = _normalise(str(gold_cls.get(field_name, "")))
         pred_val = _normalise(str(pred_cls.get(field_name, "")))
-        if field_name in ("seniority", "company_size"):
+        if field_name in _OVERALL_FIELDS:
             score.classification_match[field_name] = gold_val == pred_val
         else:
-            # industry/segment are free-form prose. Match passes when every
-            # gold token (punctuation-stripped) appears in the prediction,
-            # i.e. `gold ⊆ predicted`. Predicted-adds-detail still passes;
-            # predicted-strips-detail fails. Gold is the reference, not a
-            # ceiling to be exceeded by rewording.
+            # industry/segment are free-form prose. Boolean match still passes
+            # only when every gold token appears in the prediction (gold ⊆
+            # predicted) — kept for the per-field report. The boolean does not
+            # feed `classification_overall`; the soft overlap fraction below
+            # is the metric we actually trend on.
             gold_tokens = _content_tokens(gold_val)
             pred_tokens = _content_tokens(pred_val)
             if not gold_tokens:
                 score.classification_match[field_name] = True
+                overlap = None
             else:
                 score.classification_match[field_name] = gold_tokens.issubset(
                     pred_tokens
                 )
-    score.classification_overall = all(score.classification_match.values())
+                overlap = len(gold_tokens & pred_tokens) / len(gold_tokens)
+            if field_name == "industry":
+                score.industry_overlap = overlap
+            else:
+                score.segment_overlap = overlap
+    score.classification_overall = all(
+        score.classification_match[f] for f in _OVERALL_FIELDS
+    )
 
     gold_fs = gold.get("fit_score") or {}
     pred_fs = output.get("fit_score") or {}
@@ -295,6 +360,8 @@ class AggregateMetrics:
     success_rate: float
     classification_accuracy: float
     classification_per_field: dict[str, float]
+    industry_overlap_mean: float | None
+    segment_overlap_mean: float | None
     action_accuracy: float
     fit_pearson: float | None
     fit_spearman: float | None
@@ -334,6 +401,14 @@ def aggregate(
         sum(1 for s in successes if s.classification_overall) / len(successes)
         if successes
         else 0.0
+    )
+    industry_overlaps = [s.industry_overlap for s in successes if s.industry_overlap is not None]
+    segment_overlaps = [s.segment_overlap for s in successes if s.segment_overlap is not None]
+    industry_overlap_mean = (
+        sum(industry_overlaps) / len(industry_overlaps) if industry_overlaps else None
+    )
+    segment_overlap_mean = (
+        sum(segment_overlaps) / len(segment_overlaps) if segment_overlaps else None
     )
 
     action_pairs = [
@@ -409,6 +484,8 @@ def aggregate(
         success_rate=success_rate,
         classification_accuracy=classification_overall,
         classification_per_field=classification_per_field,
+        industry_overlap_mean=industry_overlap_mean,
+        segment_overlap_mean=segment_overlap_mean,
         action_accuracy=action_accuracy,
         fit_pearson=fit_pearson,
         fit_spearman=fit_spearman,

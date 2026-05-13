@@ -31,6 +31,7 @@ EXTRACTOR_MODEL_ID = "claude-haiku-4-5-20251001"
 EXTRACTOR_MAX_TOKENS = 2048
 EXTRACTOR_CONCURRENCY = 6
 EXTRACTOR_TIMEOUT_S = 60
+EXTRACTOR_MAX_RETRIES = 6
 
 EXTRACTOR_SYSTEM = """\
 You read a salesperson's free-form notes about a B2B lead and extract the
@@ -85,7 +86,7 @@ def _client() -> AsyncAnthropic:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY is not set")
-    return AsyncAnthropic(api_key=api_key, timeout=EXTRACTOR_TIMEOUT_S)
+    return AsyncAnthropic(api_key=api_key, timeout=EXTRACTOR_TIMEOUT_S, max_retries=EXTRACTOR_MAX_RETRIES)
 
 
 def _user_message(item: EvalItem, chat_text: str) -> str:

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
 from services.eval.metrics import PerItemScore
-from services.eval.runner import _Progress, _failure_modes
+from services.eval.runner import _Progress, _failure_modes, _resolve_item_ids
 
 
 def _passing_score(item_id: str = "ok") -> PerItemScore:
@@ -85,3 +87,30 @@ def test_progress_tick_prints_at_completion(capsys):
     p.tick()  # third tick = completion, must print
     captured = capsys.readouterr().out
     assert "[eval][test] 3/3" in captured
+
+
+def test_resolve_item_ids_comma_list():
+    assert _resolve_item_ids("1,4,13") == {"1", "4", "13"}
+
+
+def test_resolve_item_ids_skips_blanks_and_whitespace():
+    assert _resolve_item_ids("1, , 4, 13 ,") == {"1", "4", "13"}
+
+
+def test_resolve_item_ids_from_file(tmp_path):
+    p = tmp_path / "anchors.txt"
+    p.write_text(
+        "# header comment\n"
+        "1   # first anchor\n"
+        "\n"
+        "4\n"
+        "   13   # trailing comment\n"
+    )
+    assert _resolve_item_ids(f"@{p}") == {"1", "4", "13"}
+
+
+def test_resolve_item_ids_empty_raises():
+    with pytest.raises(SystemExit):
+        _resolve_item_ids("")
+    with pytest.raises(SystemExit):
+        _resolve_item_ids(",,,")

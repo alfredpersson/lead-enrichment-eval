@@ -55,6 +55,8 @@ from services.eval.judges import (
     judge_grounding,
     judge_hooks,
 )
+
+EvalItemFilter = set[str] | None
 from services.eval.metrics import (
     AggregateMetrics,
     PerItemScore,
@@ -77,6 +79,27 @@ def _git_sha() -> str:
         return out.decode().strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "unknown"
+
+
+def _resolve_item_ids(spec: str) -> set[str]:
+    """Parse `--items` argument into a set of IDs.
+
+    Two forms:
+      - `1,2,3` — comma-separated literal IDs
+      - `@path/to/file` — one ID per line; `#` starts a comment
+    """
+    if spec.startswith("@"):
+        text = pathlib.Path(spec[1:]).read_text()
+        ids: list[str] = []
+        for line in text.splitlines():
+            stripped = line.split("#", 1)[0].strip()
+            if stripped:
+                ids.append(stripped)
+    else:
+        ids = [s.strip() for s in spec.split(",") if s.strip()]
+    if not ids:
+        raise SystemExit(f"--items produced an empty ID set: {spec!r}")
+    return set(ids)
 
 
 # ----- Progress logging -------------------------------------------------------
@@ -192,14 +215,7 @@ def _failure_modes(scores: list[PerItemScore]) -> list[dict[str, Any]]:
     not just aggregate numbers."""
     out = []
     for s in scores:
-        grounded_ok = not s.claim_count or s.substring_grounded_rate >= 1.0
-        if (
-            s.success
-            and s.action_correct
-            and s.classification_overall
-            and s.adversarial_pass is not False
-            and grounded_ok
-        ):
+        if s.is_passing():
             continue
         reasons: list[str] = []
         if not s.success:
@@ -345,8 +361,17 @@ async def _run_full(
     *,
     max_chat_turns: int,
     include_per_item: bool,
+    item_ids: EvalItemFilter = None,
+    skip_judges: bool = False,
 ) -> dict[str, Any]:
     version, items = load_dataset()
+    if item_ids is not None:
+        available = {it.id for it in items}
+        missing = item_ids - available
+        if missing:
+            raise SystemExit(f"Unknown item IDs: {sorted(missing)}")
+        items = [it for it in items if it.id in item_ids]
+        print(f"[eval] --items: running {len(items)} of {len(available)} items", flush=True)
     started = time.time()
     started_iso = datetime.now(timezone.utc).isoformat()
 
@@ -419,28 +444,35 @@ async def _run_full(
             items, chat_lat, chat_in, chat_out, chat_outputs
         )
 
-        print("[eval] grounding judges...", flush=True)
         items_by_id = {it.id: it for it in items}
-        integrated_grounding = await judge_grounding(
-            items_by_id,
-            integrated_outputs,
-            anthropic_client=anthropic_client,
-            openai_client=openai_client,
-        )
-        chat_grounding = await judge_grounding(
-            items_by_id,
-            chat_outputs,
-            anthropic_client=anthropic_client,
-            openai_client=openai_client,
-        )
+        if skip_judges:
+            print("[eval] --skip-judges: grounding + hook judges skipped", flush=True)
+            integrated_grounding = GroundingResults()
+            chat_grounding = GroundingResults()
+            integrated_hooks = HookResults()
+            chat_hooks = HookResults()
+        else:
+            print("[eval] grounding judges...", flush=True)
+            integrated_grounding = await judge_grounding(
+                items_by_id,
+                integrated_outputs,
+                anthropic_client=anthropic_client,
+                openai_client=openai_client,
+            )
+            chat_grounding = await judge_grounding(
+                items_by_id,
+                chat_outputs,
+                anthropic_client=anthropic_client,
+                openai_client=openai_client,
+            )
 
-        print("[eval] hook coherence judge...", flush=True)
-        integrated_hooks = await judge_hooks(
-            items_by_id, integrated_outputs, openai_client=openai_client
-        )
-        chat_hooks = await judge_hooks(
-            items_by_id, chat_outputs, openai_client=openai_client
-        )
+            print("[eval] hook coherence judge...", flush=True)
+            integrated_hooks = await judge_hooks(
+                items_by_id, integrated_outputs, openai_client=openai_client
+            )
+            chat_hooks = await judge_hooks(
+                items_by_id, chat_outputs, openai_client=openai_client
+            )
 
         robustness_block: dict[str, Any] | None = (
             _robustness_block(perturbed, robust_results, include_per_item=include_per_item)
@@ -487,6 +519,8 @@ async def _run_full(
             "git_sha": _git_sha(),
             "test_set_version": version,
             "n_items": len(items),
+            "subset_filter": sorted(item_ids) if item_ids is not None else None,
+            "judges_skipped": skip_judges,
             "started_at": started_iso,
             "completed_at": completed_iso,
             "elapsed_seconds": elapsed_s,
@@ -538,6 +572,7 @@ async def _run_full(
                     "grounding": _grounding_to_dict(integrated_grounding),
                     "hooks": _hooks_to_dict(integrated_hooks),
                     "per_item": [_per_item_to_dict(s) for s in integrated_scores],
+                    "raw_outputs": integrated_outputs,
                     "inference_meta": [
                         _inference_meta(r) for r in integrated_inference
                     ],
@@ -548,6 +583,7 @@ async def _run_full(
                     "grounding": _grounding_to_dict(chat_grounding),
                     "hooks": _hooks_to_dict(chat_hooks),
                     "per_item": [_per_item_to_dict(s) for s in chat_scores],
+                    "raw_outputs": chat_outputs,
                     "inference_meta": [_chat_meta(r) for r in chat_results],
                     "turns_distribution": chat_turns_dist,
                     "cap_hits": chat_cap_hits,
@@ -617,7 +653,28 @@ def main() -> int:
             "triple snapshot size."
         ),
     )
+    parser.add_argument(
+        "--items",
+        help=(
+            "Subset of items to run. Either a comma-separated list of IDs "
+            "(e.g. '1,4,13') or '@<path>' to a file with one ID per line "
+            "and '#' comments. Used by the PR-gate to run only the anchor "
+            "set. Without --items the full dataset runs."
+        ),
+    )
+    parser.add_argument(
+        "--skip-judges",
+        action="store_true",
+        help=(
+            "Skip the LLM-as-judge passes (grounding + hook). Deterministic "
+            "metrics (action, classification, substring grounding, "
+            "adversarial pass) still produce. Used by the PR-gate to keep "
+            "the regression check cheap and judge-stochasticity-free."
+        ),
+    )
     args = parser.parse_args()
+
+    item_ids = _resolve_item_ids(args.items) if args.items else None
 
     try:
         snapshot = asyncio.run(
@@ -626,6 +683,8 @@ def main() -> int:
                 args.robustness,
                 max_chat_turns=args.max_chat_turns,
                 include_per_item=args.include_per_item,
+                item_ids=item_ids,
+                skip_judges=args.skip_judges,
             )
         )
     except KeyboardInterrupt:

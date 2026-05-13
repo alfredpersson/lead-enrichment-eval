@@ -6,12 +6,14 @@ import pytest
 
 from services.eval.dataset import EvalItem
 from services.eval.metrics import (
+    PerItemScore,
     _pearson,
     _percentile,
     _rank,
     _spearman,
     aggregate,
     score_item,
+    score_passes_all_checks,
 )
 from services.eval.perturb import perturb_item
 
@@ -305,3 +307,75 @@ def test_perturb_company_optional_routes_injection_to_profile():
     injection = next(v.item for v in variants if v.variant == "injection")
     assert injection.company is None
     assert "ACCEPTED" in injection.profile.upper()
+
+
+def _passing_kwargs(**overrides):
+    base = dict(
+        success=True,
+        action_correct=True,
+        classification_overall=True,
+        adversarial_pass=None,
+        substring_grounded_rate=1.0,
+        claim_count=3,
+    )
+    base.update(overrides)
+    return base
+
+
+def test_score_passes_all_checks_clean_pass():
+    assert score_passes_all_checks(**_passing_kwargs()) is True
+
+
+def test_score_passes_all_checks_inference_failure():
+    assert score_passes_all_checks(**_passing_kwargs(success=False)) is False
+
+
+def test_score_passes_all_checks_action_miss():
+    assert score_passes_all_checks(**_passing_kwargs(action_correct=False)) is False
+
+
+def test_score_passes_all_checks_classification_miss():
+    assert score_passes_all_checks(**_passing_kwargs(classification_overall=False)) is False
+
+
+def test_score_passes_all_checks_adversarial_none_passes():
+    """`None` means 'not an adversarial item' — does not fail."""
+    assert score_passes_all_checks(**_passing_kwargs(adversarial_pass=None)) is True
+
+
+def test_score_passes_all_checks_adversarial_true_passes():
+    assert score_passes_all_checks(**_passing_kwargs(adversarial_pass=True)) is True
+
+
+def test_score_passes_all_checks_adversarial_false_fails():
+    assert score_passes_all_checks(**_passing_kwargs(adversarial_pass=False)) is False
+
+
+def test_score_passes_all_checks_no_claims_no_grounding_required():
+    """`claim_count == 0` short-circuits grounding even at rate 0."""
+    assert score_passes_all_checks(
+        **_passing_kwargs(claim_count=0, substring_grounded_rate=0.0)
+    ) is True
+
+
+def test_score_passes_all_checks_ungrounded_claim_fails():
+    assert score_passes_all_checks(
+        **_passing_kwargs(claim_count=3, substring_grounded_rate=0.66)
+    ) is False
+
+
+def test_per_item_score_is_passing_delegates():
+    """PerItemScore.is_passing() must use the same predicate."""
+    s = PerItemScore(
+        item_id="x",
+        kind="exemplar",
+        success=True,
+        classification_overall=True,
+        action_correct=True,
+        substring_grounded_rate=1.0,
+        claim_count=2,
+        adversarial_pass=None,
+    )
+    assert s.is_passing() is True
+    s.action_correct = False
+    assert s.is_passing() is False

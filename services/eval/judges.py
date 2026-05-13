@@ -38,6 +38,7 @@ OPENAI_HOOK_JUDGE_MODEL = os.environ.get("OPENAI_HOOK_MODEL", "gpt-5-mini")
 
 JUDGE_CONCURRENCY = 4
 JUDGE_TIMEOUT_S = 60
+JUDGE_MAX_RETRIES = 6
 
 
 GROUNDING_SYSTEM = """\
@@ -118,7 +119,7 @@ def _anthropic() -> AsyncAnthropic:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY is not set")
-    return AsyncAnthropic(api_key=api_key, timeout=JUDGE_TIMEOUT_S)
+    return AsyncAnthropic(api_key=api_key, timeout=JUDGE_TIMEOUT_S, max_retries=JUDGE_MAX_RETRIES)
 
 
 def _openai_client():
@@ -279,10 +280,15 @@ async def judge_grounding(
         )
 
     async def openai_for(j: ClaimJudgement) -> tuple[bool | None, str | None]:
-        if not j.substring_match:
-            return False, "substring mismatch"
+        # Conditional-client check goes first: when no OpenAI key is configured
+        # the judge cannot be consulted at all, including on substring-fail
+        # claims. The previous order populated openai_grounded=False for
+        # substring failures even with no key, which pulled openai_rate to 0
+        # and (via min over rates) tanked headline_rate.
         if openai_client is None:
             return None, None
+        if not j.substring_match:
+            return False, "substring mismatch"
         return await _openai_judge_claim(
             openai_client,
             openai_model,

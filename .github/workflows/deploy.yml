@@ -8,9 +8,49 @@ on:
   workflow_dispatch:
 
 jobs:
+  gate:
+    name: Anchor regression gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Defense-in-depth against direct pushes / merge-commits whose SHA
+    # never went through eval-pr.yml. PR-gate already protects the path
+    # that reviewers see; this re-runs it pre-deploy so prod never ships
+    # on a SHA that hasn't held the anchor baseline.
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Run anchor eval
+        env:
+          APP_ENV: local
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -m services.eval.runner \
+            --items @data/eval_runs/anchor_items.txt \
+            --skip-judges \
+            --robustness none \
+            --tag deploy-check
+      - name: Upload snapshot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-check-snapshot
+          path: |
+            data/eval_runs/*deploy-check.json
+            data/eval_runs/latest.json
+      - name: Compare against anchor baseline
+        run: |
+          python -m scripts.check_anchor_baseline \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
   modal:
     name: Deploy Modal services
     runs-on: ubuntu-24.04
+    needs: gate
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6

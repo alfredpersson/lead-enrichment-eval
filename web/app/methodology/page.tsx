@@ -363,8 +363,8 @@ export default function MethodologyPage() {
           and OpenAI&apos;s strongest available flagship (GPT-5 when present;
           otherwise the model name is set via{" "}
           <code className={styles.code}>OPENAI_GROUNDING_MODEL</code>). The
-          scorecard publishes three values: Opus grounding rate, OpenAI judge
-          grounding rate, and Cohen&apos;s kappa between them. The{" "}
+          scorecard publishes three values: Sonnet grounding rate, OpenAI
+          judge grounding rate, and Cohen&apos;s kappa between them. The{" "}
           <em>lower of the two rates</em> is the headline number quoted to
           prospects — conservative read, no cherry-picking.
         </p>
@@ -397,6 +397,30 @@ export default function MethodologyPage() {
           ground in. A pass without a substantive critique is not a real
           pass; those land in the scorecard&apos;s judgements list for
           re-review.
+        </p>
+        <h3>Reading judge-mediated metrics across modes</h3>
+        <p>
+          GPT-5 is meaningfully stricter than the Sonnet judge on integrated
+          (10-25pp lower grounding rate; less so on chat). Integrated
+          produces more claims with more specificity — canonical-label
+          normalizations like &quot;B2B SaaS workflow automation&quot; —
+          and GPT-5 marks more of them insufficiently supported by the
+          source quote. Since the headline takes the lower of the two,
+          this can pull integrated&apos;s headline grounding below
+          chat&apos;s on the same run. Cohen&apos;s kappa in the 0.2-0.4
+          range is itself the signal here — the judges genuinely disagree
+          on borderline cases.
+        </p>
+        <p>
+          Hook pass rate is scored only over items where a hook was
+          extractable. Chat refusals on adversarial inputs (jailbreak,
+          fake rubric) produce no structured hook to judge and drop out
+          of the chat denominator, which can inflate chat&apos;s apparent
+          pass rate. The deterministic metrics — classification accuracy,
+          action accuracy, substring grounding, per-field accuracy —
+          score every item including refusals, so they&apos;re the
+          load-bearing cross-mode comparison. The judge-mediated metrics
+          report what the scorable subset looks like.
         </p>
         <p className={styles.callout}>
           Live inference is Anthropic-only. Cross-provider judging is

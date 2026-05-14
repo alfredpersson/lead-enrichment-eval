@@ -359,7 +359,7 @@ export default function MethodologyPage() {
         <p>
           For every claim, the deterministic substring check runs first; a
           miss auto-fails without a judge call. Claims that pass the
-          substring check go to <strong>two judges</strong>: Claude Opus 4.7
+          substring check go to <strong>two judges</strong>: Claude Sonnet 4.6
           and OpenAI&apos;s strongest available flagship (GPT-5 when present;
           otherwise the model name is set via{" "}
           <code className={styles.code}>OPENAI_GROUNDING_MODEL</code>). The
@@ -506,7 +506,12 @@ export default function MethodologyPage() {
             test-set size grows.
           </li>
           <li>
-            Nightly cron via GitHub Actions, 02:00 UTC.
+            Regression gate runs on every PR that touches eval-relevant
+            paths (cheap anchor subset, no judges). Canonical scorecard
+            snapshots refresh on demand via{" "}
+            <code className={styles.code}>workflow_dispatch</code>, not on
+            a fixed schedule — the demo doesn&apos;t ship daily, so a
+            time-based cron mostly re-runs identical experiments.
           </li>
           <li>
             Results commit as a JSON snapshot to{" "}

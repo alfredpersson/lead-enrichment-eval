@@ -46,6 +46,10 @@ Strict claim-grounding rule:
 - The draft hook may only use claims from the `claims` list. Do not invent
   facts about the lead.
 
+Industry classification:
+- Pick the canonical `industry` label from the schema enum. Use
+  `Insufficient signal` when the input does not establish industry.
+
 Output language:
 - Always English, regardless of input language. Source quotes stay verbatim in
   the input language.
@@ -82,7 +86,19 @@ ENRICH_LEAD_TOOL: dict = {
             "classification": {
                 "type": "object",
                 "properties": {
-                    "industry": {"type": "string"},
+                    "industry": {
+                        "type": "string",
+                        "enum": [
+                            "B2B SaaS",
+                            "Consumer software",
+                            "Consumer hardware",
+                            "Consumer / B2B SaaS hybrid",
+                            "Professional services",
+                            "Professional services with software ambitions",
+                            "Manufacturing",
+                            "Insufficient signal",
+                        ],
+                    },
                     "segment": {"type": "string"},
                     "seniority": {
                         "type": "string",

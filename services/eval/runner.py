@@ -48,6 +48,7 @@ from services.eval.inference import (
     run_integrated,
 )
 from services.eval.judges import (
+    ANTHROPIC_GROUNDING_JUDGE_MODEL,
     GroundingResults,
     HookResults,
     _anthropic as _anthropic_client_factory,
@@ -529,7 +530,7 @@ async def _run_full(
                 "chat": CHAT_MODEL_ID,
                 "extractor": "claude-haiku-4-5-20251001",
                 "grounding_judges": {
-                    "anthropic": "claude-opus-4-7",
+                    "anthropic": ANTHROPIC_GROUNDING_JUDGE_MODEL,
                     "openai": os.environ.get("OPENAI_GROUNDING_MODEL", "gpt-5"),
                 },
                 "hook_judge": os.environ.get("OPENAI_HOOK_MODEL", "gpt-5-mini"),

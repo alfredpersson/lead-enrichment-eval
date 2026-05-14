@@ -1,7 +1,7 @@
 """
 LLM-as-judge passes: claim grounding and hook coherence.
 
-Claim grounding runs two judges (Claude Opus 4.7 and an OpenAI flagship) per
+Claim grounding runs two judges (Claude Sonnet 4.6 and an OpenAI flagship) per
 the methodology's cross-provider plan, then publishes both rates plus Cohen's
 kappa for inter-judge agreement. Only claims that pass the deterministic
 whitespace/case-insensitive substring check enter the judge pool; substring
@@ -32,7 +32,7 @@ from anthropic import AsyncAnthropic
 from services.eval.dataset import EvalItem
 from services.eval.metrics import _normalise
 
-OPUS_JUDGE_MODEL = "claude-opus-4-7"
+ANTHROPIC_GROUNDING_JUDGE_MODEL = "claude-sonnet-4-6"
 OPENAI_GROUNDING_JUDGE_MODEL = os.environ.get("OPENAI_GROUNDING_MODEL", "gpt-5")
 OPENAI_HOOK_JUDGE_MODEL = os.environ.get("OPENAI_HOOK_MODEL", "gpt-5-mini")
 
@@ -165,7 +165,7 @@ async def _opus_judge_claim(
     async with sem:
         try:
             resp = await client.messages.create(
-                model=OPUS_JUDGE_MODEL,
+                model=ANTHROPIC_GROUNDING_JUDGE_MODEL,
                 max_tokens=300,
                 system=GROUNDING_SYSTEM,
                 messages=[{"role": "user", "content": _grounding_user_prompt(item, claim)}],
@@ -198,7 +198,6 @@ async def _openai_judge_claim(
                     {"role": "system", "content": GROUNDING_SYSTEM},
                     {"role": "user", "content": _grounding_user_prompt(item, claim)},
                 ],
-                temperature=0,
                 response_format={"type": "json_object"},
             )
         except Exception as e:
@@ -385,7 +384,13 @@ async def _hook_judge_one(
     output: dict[str, Any],
     sem: asyncio.Semaphore,
 ) -> HookJudgement:
-    hook_text = ((output or {}).get("draft_hook") or {}).get("text") or ""
+    draft_hook_obj = (output or {}).get("draft_hook")
+    if isinstance(draft_hook_obj, dict):
+        hook_text = draft_hook_obj.get("text") or ""
+    elif isinstance(draft_hook_obj, str):
+        hook_text = draft_hook_obj
+    else:
+        hook_text = ""
     action = (output or {}).get("action")
     if not hook_text:
         return HookJudgement(item_id=item.id, passes=None, critique="empty hook")
@@ -397,7 +402,6 @@ async def _hook_judge_one(
                     {"role": "system", "content": HOOK_SYSTEM},
                     {"role": "user", "content": _hook_user_prompt(item, hook_text, action)},
                 ],
-                temperature=0,
                 response_format={"type": "json_object"},
             )
         except Exception as e:

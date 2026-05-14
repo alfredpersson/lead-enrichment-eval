@@ -1,9 +1,6 @@
-name: Nightly eval
+name: Eval run
 
 on:
-  schedule:
-    # 02:00 UTC. Matches the methodology page.
-    - cron: "0 2 * * *"
   workflow_dispatch:
     inputs:
       tag:

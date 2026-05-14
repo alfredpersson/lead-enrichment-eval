@@ -1,5 +1,18 @@
 {
   "schema_version": 1,
-  "annotations": [],
-  "_schema_note": "Each annotation is one dated incident in the eval-and-fix loop. The scorecard renders these as a timeline alongside the headline metrics. Shape: { date: 'YYYY-MM-DD', metric: 'substring_grounding_rate' | 'action_accuracy' | ..., perturbation_class: 'injection' | 'typos' | 'paraphrase' | null, failure_summary: string, fix_summary: string, pre_fix_snapshot: 'data/eval_runs/<file>.json', post_fix_snapshot: 'data/eval_runs/<file>.json', pre_fix_value: number, post_fix_value: number }"
+  "annotations": [
+    {
+      "date": "2026-05-13",
+      "metric": "classification_per_field.industry",
+      "perturbation_class": null,
+      "failure_summary": "First full eval revealed the integrated build's industry classification was correct on only 24/73 items (32.9%). The tool schema declared `industry` as a free-form string and the system prompt provided no canonical vocabulary, so the model emitted semantically-right-but-strictly-wrong labels (e.g. 'SaaS', 'B2B Software') instead of the gold's 'B2B SaaS'. Gold has 8 distinct industry values across the 73-item set, with 'B2B SaaS' covering 63% of items.",
+      "fix_summary": "Added an 8-value enum to `industry` on the `enrich_lead` tool schema (verbatim gold vocabulary: B2B SaaS, Consumer software, Consumer hardware, Consumer / B2B SaaS hybrid, Professional services, Professional services with software ambitions, Manufacturing, Insufficient signal) plus a one-line system-prompt instruction naming 'Insufficient signal' as the catch-all. The chat build was deliberately not modified — the chat-side improvement (industry 38.2% → 88.3%) is a methodology effect: the Haiku extractor shares the same tool schema, so chat's free-text industry labels now normalize to the canonical vocabulary at extraction time. The integrated lift is model-side, the chat lift is extraction-side.",
+      "pre_fix_snapshot": "data/eval_runs/20260513T144616Z-prefix.json",
+      "post_fix_snapshot": "data/eval_runs/20260513T174653Z-postfix.json",
+      "pre_fix_value": 0.3287671232876712,
+      "post_fix_value": 0.9452054794520548,
+      "_methodology_note": "Prefix was a `--robustness full` run with judges enabled (Anthropic side only — OpenAI judges silently no-op'd due to a missing `openai` package install that has since been fixed). Postfix was `--robustness none --skip-judges` for cost reasons. The comparison is valid for `classification_per_field.industry` and other deterministic main-pass metrics because both runs share identical inputs (73 items, same gold). It is not valid for judge-grounded metrics or robustness numbers."
+    }
+  ],
+  "_schema_note": "Each annotation is one dated incident in the eval-and-fix loop. The scorecard renders these as a timeline alongside the headline metrics. Shape: { date: 'YYYY-MM-DD', metric: 'substring_grounding_rate' | 'action_accuracy' | 'classification_per_field.<field>' | ..., perturbation_class: 'injection' | 'typos' | 'paraphrase' | null, failure_summary: string, fix_summary: string, pre_fix_snapshot: 'data/eval_runs/<file>.json', post_fix_snapshot: 'data/eval_runs/<file>.json', pre_fix_value: number, post_fix_value: number, _methodology_note?: string }"
 }

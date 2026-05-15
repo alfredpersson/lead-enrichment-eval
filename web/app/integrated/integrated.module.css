@@ -680,6 +680,19 @@
   margin: 0 0 0.3rem;
 }
 
+.lowSimilarityBadge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--amber);
+  background: rgba(193, 138, 47, 0.12);
+  border: 1px solid rgba(193, 138, 47, 0.35);
+  border-radius: 9999px;
+  padding: 0.15rem 0.55rem;
+  margin: 0 0 0.4rem;
+}
+
 .neighbours {
   display: grid;
   gap: 0.25rem;

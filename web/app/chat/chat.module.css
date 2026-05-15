@@ -645,6 +645,53 @@
   margin-left: auto;
 }
 
+.bubbleNeighbours {
+  margin-top: 0.4rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--cream-elevated);
+  display: grid;
+  gap: 0.3rem;
+}
+
+.bubbleNeighboursLabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.bubbleLowSim {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--amber);
+  background: rgba(193, 138, 47, 0.12);
+  border: 1px solid rgba(193, 138, 47, 0.35);
+  border-radius: 9999px;
+  padding: 0.12rem 0.5rem;
+  width: fit-content;
+}
+
+.bubbleNeighbourList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bubbleNeighbourRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.6rem;
+}
+
 /* -------- Markdown -------- */
 
 .markdown {

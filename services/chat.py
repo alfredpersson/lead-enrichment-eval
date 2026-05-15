@@ -17,7 +17,7 @@ from typing import Any, AsyncIterator
 from anthropic import AsyncAnthropic
 
 from services.config import is_local
-from services.embeddings import embed
+from services.embeddings import embed, find_neighbours
 from services.prompts import chat_system_blocks
 from services.telemetry import write_request_row
 from services.validation import check_input
@@ -129,6 +129,19 @@ async def chat_stream(
         )
         embedding = await embed(embed_text or " ")
 
+    # Anchor neighbours to the lead profile (not the assistant reply) so the
+    # panel matches the integrated build's "test-set items similar to this lead"
+    # framing and stays comparable across modes.
+    if context:
+        lead_parts = [
+            (context.get("profile") or "").strip(),
+            (context.get("company") or "").strip(),
+        ]
+        neighbour_text = "\n\n".join(p for p in lead_parts if p)
+    else:
+        neighbour_text = ""
+    neighbours = await find_neighbours(neighbour_text or output_text or " ", k=3)
+
     await write_request_row(
         {
             "request_id": request_id,
@@ -158,5 +171,6 @@ async def chat_stream(
             "cache_hit": cache_hit,
             "model": MODEL_ID,
             "turn_count": turn_count,
+            "eval_neighbours": neighbours,
         },
     }

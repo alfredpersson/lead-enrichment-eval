@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { LowSimilarityBadge } from "@/app/_shared/low-similarity-badge";
 import type { ChatMessage } from "@/lib/conversations";
 import { formatNumber } from "@/lib/utils";
 import styles from "./chat.module.css";
@@ -212,6 +213,34 @@ export function MessageBubble({
           )}
         </footer>
       )}
+
+      {showMetrics &&
+        message.meta?.eval_neighbours &&
+        message.meta.eval_neighbours.length > 0 && (
+          <section
+            className={styles.bubbleNeighbours}
+            aria-label="Eval neighbours"
+          >
+            <span className={styles.bubbleNeighboursLabel}>
+              Eval neighbours
+            </span>
+            <LowSimilarityBadge
+              neighbours={message.meta.eval_neighbours}
+              className={styles.bubbleLowSim}
+            />
+            <ul className={styles.bubbleNeighbourList}>
+              {message.meta.eval_neighbours.map((n) => (
+                <li key={n.id} className={styles.bubbleNeighbourRow}>
+                  <span>#{n.id}</span>
+                  <span>sim {n.similarity.toFixed(2)}</span>
+                  <span>
+                    fit {n.score === null ? "—" : n.score.toFixed(2)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
     </article>
   );
 }

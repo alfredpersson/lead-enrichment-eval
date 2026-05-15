@@ -16,6 +16,7 @@ import {
   exemplarToLead,
 } from "@/lib/leads";
 import { parseSseStream } from "@/lib/sse";
+import { LowSimilarityBadge } from "@/app/_shared/low-similarity-badge";
 import { QueueEmpty } from "@/app/_shared/queue-empty";
 import type {
   Action,
@@ -303,17 +304,23 @@ function UnderTheHood({
                 Test set not seeded yet.
               </p>
             ) : (
-              <div className={styles.neighbours}>
-                {m.eval_neighbours.map((n) => (
-                  <div key={n.id} className={styles.neighbourRow}>
-                    <span>#{n.id}</span>
-                    <span>sim {n.similarity.toFixed(2)}</span>
-                    <span>
-                      fit {n.score === null ? "—" : n.score.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <>
+                <LowSimilarityBadge
+                  neighbours={m.eval_neighbours}
+                  className={styles.lowSimilarityBadge}
+                />
+                <div className={styles.neighbours}>
+                  {m.eval_neighbours.map((n) => (
+                    <div key={n.id} className={styles.neighbourRow}>
+                      <span>#{n.id}</span>
+                      <span>sim {n.similarity.toFixed(2)}</span>
+                      <span>
+                        fit {n.score === null ? "—" : n.score.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
           <div className={styles.subPanel}>

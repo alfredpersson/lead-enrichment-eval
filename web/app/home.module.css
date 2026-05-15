@@ -1,0 +1,239 @@
+.page {
+  display: grid;
+  gap: 3rem;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 0.5rem;
+}
+
+/* -------- Hero -------- */
+
+.hero {
+  display: grid;
+  gap: 1rem;
+  max-width: 70ch;
+}
+
+.heroTitle {
+  font-size: 2.6rem;
+  line-height: 1.08;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.heroLede {
+  font-size: 1.05rem;
+  color: var(--muted);
+  margin: 0;
+  max-width: 62ch;
+}
+
+.heroCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.heroPrimary,
+.heroSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  transition: background 120ms ease, border-color 120ms ease,
+    color 120ms ease, transform 120ms ease;
+}
+
+.heroPrimary {
+  background: var(--amber);
+  color: var(--cream);
+  border: 1px solid var(--amber);
+  box-shadow: var(--shadow-sm);
+}
+
+.heroPrimary:hover,
+.heroPrimary:focus-visible {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--cream);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.heroSecondary {
+  background: var(--cream-elevated);
+  color: var(--navy);
+  border: 1px solid var(--border);
+}
+
+.heroSecondary:hover,
+.heroSecondary:focus-visible {
+  background: var(--amber-soft);
+  border-color: var(--amber);
+  color: var(--navy);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+/* -------- What's different panel -------- */
+
+.diff {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.diffTable {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--cream-elevated);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.diffRow {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1.1fr) 1fr 1fr;
+  align-items: stretch;
+}
+
+.diffRow + .diffRow {
+  border-top: 1px solid var(--border);
+}
+
+.diffHead {
+  background: rgba(27, 42, 78, 0.04);
+}
+
+.diffCell {
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.92rem;
+}
+
+.diffCell + .diffCell {
+  border-left: 1px solid var(--border);
+}
+
+.diffLabel {
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.diffHeadLabel {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.diffIntegrated {
+  background: var(--amber-soft);
+  color: var(--navy);
+}
+
+.diffChat {
+  color: var(--muted);
+}
+
+/* -------- Destination cards -------- */
+
+.cardGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 0.55rem;
+  height: 100%;
+  padding: 1.25rem 1.35rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--cream-elevated);
+  color: var(--navy);
+  box-shadow: var(--shadow-sm);
+  transition: transform 140ms ease, box-shadow 140ms ease,
+    border-color 140ms ease;
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--amber);
+  color: var(--navy);
+  text-decoration: none;
+}
+
+.cardEyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+}
+
+.cardTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.cardBody {
+  font-size: 0.92rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.cardCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--amber);
+  margin-top: 0.25rem;
+}
+
+/* -------- Responsive -------- */
+
+@media (max-width: 720px) {
+  .page {
+    gap: 2.25rem;
+  }
+  .heroTitle {
+    font-size: 1.9rem;
+  }
+  .heroLede {
+    font-size: 1rem;
+  }
+  .diffRow {
+    grid-template-columns: 1fr;
+  }
+  .diffCell + .diffCell {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}

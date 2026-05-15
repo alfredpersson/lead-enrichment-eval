@@ -2,6 +2,7 @@
 // user's device — they never leave the browser. The /privacy page covers the
 // disclosure; the composer tooltip surfaces it inline.
 
+import type { EvalNeighbour } from "@/lib/types";
 import { isBrowser } from "@/lib/utils";
 
 export interface ChatMeta {
@@ -12,6 +13,7 @@ export interface ChatMeta {
   cache_hit: boolean;
   model: string;
   turn_count: number;
+  eval_neighbours?: EvalNeighbour[];
 }
 
 export interface LeadContextRef {

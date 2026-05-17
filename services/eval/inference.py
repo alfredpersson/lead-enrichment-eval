@@ -331,7 +331,10 @@ async def _multiturn_one(
     ]
     aggregated_text_parts: list[str] = []
     total_in = total_out = cache_read = 0
-    started = time.perf_counter()
+    # Sum per-call wall times inside the semaphore so latency excludes queue
+    # wait and harness-internal extractor round-trips — matches what the
+    # integrated path measures and what a single-user chat request would see.
+    total_call_ms = 0.0
     cap_hit = False
     turns_used = 0
     last_error: str | None = None
@@ -340,6 +343,7 @@ async def _multiturn_one(
     for turn in range(1, max_turns + 1):
         turns_used = turn
         async with sem:
+            call_started = time.perf_counter()
             try:
                 response = await client.messages.create(
                     model=CHAT_MODEL_ID,
@@ -351,6 +355,7 @@ async def _multiturn_one(
                 last_error = f"{type(e).__name__}: {e}"
                 cap_hit = True
                 break
+            total_call_ms += (time.perf_counter() - call_started) * 1000
         text_parts = [
             getattr(b, "text", "") or ""
             for b in response.content
@@ -378,7 +383,7 @@ async def _multiturn_one(
             break
         transcript.append({"role": "user", "content": CHAT_FOLLOWUP_PROMPT})
 
-    latency_ms = int((time.perf_counter() - started) * 1000)
+    latency_ms = int(total_call_ms)
     success = not cap_hit and last_error is None
     return ChatResult(
         item_id=item.id,

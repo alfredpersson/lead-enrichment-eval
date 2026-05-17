@@ -1,0 +1,591 @@
+{
+  "schema_version": 1,
+  "max_turns": 3,
+  "n_items": 73,
+  "latencies": [
+    {
+      "item_id": "1",
+      "latency_ms": 15623,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "2",
+      "latency_ms": 18276,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "3",
+      "latency_ms": 8709,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "4",
+      "latency_ms": 15829,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "5",
+      "latency_ms": 14444,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "6",
+      "latency_ms": 19873,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "7",
+      "latency_ms": 22390,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "8",
+      "latency_ms": 19658,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "9",
+      "latency_ms": 24641,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "10",
+      "latency_ms": 17234,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "11",
+      "latency_ms": 18238,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "12",
+      "latency_ms": 20377,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "13",
+      "latency_ms": 18457,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "14",
+      "latency_ms": 19352,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "15",
+      "latency_ms": 20750,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "16",
+      "latency_ms": 20465,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "17",
+      "latency_ms": 18040,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "18",
+      "latency_ms": 20904,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "19",
+      "latency_ms": 39547,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "20",
+      "latency_ms": 16744,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "21",
+      "latency_ms": 23683,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "22",
+      "latency_ms": 19197,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "23",
+      "latency_ms": 45804,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "24",
+      "latency_ms": 16839,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "25",
+      "latency_ms": 20319,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "26",
+      "latency_ms": 21145,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "27",
+      "latency_ms": 19319,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "28",
+      "latency_ms": 11581,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "29",
+      "latency_ms": 38028,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "30",
+      "latency_ms": 24570,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "31",
+      "latency_ms": 15766,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "32",
+      "latency_ms": 11724,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "33",
+      "latency_ms": 19453,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "34",
+      "latency_ms": 7968,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "35",
+      "latency_ms": 17439,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "36",
+      "latency_ms": 19120,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "37",
+      "latency_ms": 22899,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "38",
+      "latency_ms": 19492,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "39",
+      "latency_ms": 22475,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "40",
+      "latency_ms": 22469,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "41",
+      "latency_ms": 23944,
+      "turns_used": 3,
+      "success": false,
+      "cap_hit": true,
+      "error": null
+    },
+    {
+      "item_id": "42",
+      "latency_ms": 21200,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "43",
+      "latency_ms": 15421,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "44",
+      "latency_ms": 17193,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "45",
+      "latency_ms": 44935,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "46",
+      "latency_ms": 42549,
+      "turns_used": 3,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "47",
+      "latency_ms": 40369,
+      "turns_used": 3,
+      "success": false,
+      "cap_hit": true,
+      "error": null
+    },
+    {
+      "item_id": "48",
+      "latency_ms": 17267,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "49",
+      "latency_ms": 18023,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "50",
+      "latency_ms": 19793,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "51",
+      "latency_ms": 19960,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "52",
+      "latency_ms": 43411,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "53",
+      "latency_ms": 58581,
+      "turns_used": 3,
+      "success": false,
+      "cap_hit": true,
+      "error": null
+    },
+    {
+      "item_id": "54",
+      "latency_ms": 17844,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "55",
+      "latency_ms": 22070,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "56",
+      "latency_ms": 12460,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "57",
+      "latency_ms": 22417,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "58",
+      "latency_ms": 22591,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "59",
+      "latency_ms": 17507,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "60",
+      "latency_ms": 47981,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "61",
+      "latency_ms": 20069,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "62",
+      "latency_ms": 17398,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "63",
+      "latency_ms": 16161,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "64",
+      "latency_ms": 9397,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "65",
+      "latency_ms": 19979,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "66",
+      "latency_ms": 54659,
+      "turns_used": 2,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "67",
+      "latency_ms": 26564,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "68",
+      "latency_ms": 17340,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "69",
+      "latency_ms": 20455,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "70",
+      "latency_ms": 19709,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "71",
+      "latency_ms": 18943,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "72",
+      "latency_ms": 10158,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    },
+    {
+      "item_id": "73",
+      "latency_ms": 18820,
+      "turns_used": 1,
+      "success": true,
+      "cap_hit": false,
+      "error": null
+    }
+  ]
+}

@@ -330,8 +330,17 @@ export default function MethodologyPage() {
             substring miss is automatic ungrounded — no judge call needed.
           </li>
           <li>
-            <strong>Latency p50, p95.</strong> Per-call wall clock on the
-            live (non-batch) eval pass.
+            <strong>Latency p50, p95.</strong> Per-call wall clock measured
+            inside the per-mode concurrency semaphore, so the metric reflects
+            model-call time and excludes time an item spent queued waiting
+            for a free slot. For the multi-turn chat path, latency is the
+            sum of per-turn in-semaphore wall times; harness-internal
+            extractor checks between turns are not counted, since a single
+            user hitting a chat endpoint wouldn&apos;t see them. The
+            scorecard&apos;s headline chat latency is the corrected value
+            from a 2026-05-16 re-measure; the robustness panel&apos;s chat
+            latencies were not re-measured and remain on the pre-fix basis
+            (the scorecard does not display robustness latency).
           </li>
           <li>
             <strong>Token cost p50, p95.</strong> Tokens in/out per call.

@@ -12,9 +12,9 @@ export default function PrivacyPage() {
         </li>
         <li>
           Chat conversations are stored in your browser&rsquo;s local storage
-          so you can return to past leads. They never leave your device. Clear
-          them with the delete control on each conversation in the chat
-          sidebar, or by clearing your browser data.
+          and never leave your device, so you can return to past leads.
+          Clear them with the delete control on each conversation in the
+          chat sidebar, or by clearing your browser data.
         </li>
         <li>Plausible is used for cookieless analytics.</li>
         <li>Sentry may log IP addresses on error.</li>

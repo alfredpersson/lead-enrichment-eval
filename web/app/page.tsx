@@ -13,7 +13,7 @@ export default function HomePage() {
           Paste a LinkedIn-style profile and a company description.
           The app scores fit against a fixed B2B SaaS ICP and
           returns source-quoted claims, an outreach hook, and a
-          routing decision — auto-add, propose, or discard.
+          routing decision: auto-add, propose, or discard.
         </p>
         <p className={styles.heroLede}>
           Two builds run the same workflow against the same eval
@@ -87,7 +87,7 @@ export default function HomePage() {
               href="/chat"
               eyebrow="02"
               title="Chat build"
-              body="Productized chat against the same model. No tools, no schema. Conversations stay in the browser; diagnostics behind a toggle."
+              body="Productized chat against the same model, without tools or schema. Conversations stay in the browser, and diagnostics live behind a toggle."
               cta="Open the chat"
             />
           </li>

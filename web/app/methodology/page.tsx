@@ -1,7 +1,7 @@
 import styles from "./methodology.module.css";
 
 export const metadata = {
-  title: "Methodology — Lead Enrichment",
+  title: "Methodology · Lead Enrichment",
 };
 
 export default function MethodologyPage() {
@@ -72,8 +72,8 @@ export default function MethodologyPage() {
           <code className={styles.code}>enrich_lead</code> tool with a JSON
           schema, extended thinking, and a claim-grounding rule that requires
           every claim to cite a verbatim source quote. The chat build runs
-          the same model with a task-describing system prompt — no tools, no
-          schema, no grounding rule. The eval scorecard measures how that
+          the same model with a task-describing system prompt, with no
+          tools, no schema, no grounding rule. The eval scorecard measures how that
           architectural asymmetry surfaces on the same gold labels.
         </p>
         <p>
@@ -107,7 +107,7 @@ export default function MethodologyPage() {
         <h3>Action thresholds</h3>
         <p>
           Fit score is on a 0.0–1.0 scale across the entire demo. Evaluation
-          order top to bottom — first matching row wins.
+          order is top to bottom. The first matching row wins.
         </p>
         <ol>
           <li>
@@ -193,10 +193,10 @@ export default function MethodologyPage() {
           and <code className={styles.code}>data/*_specs.jsonl</code>.
         </p>
         <p>
-          Solo-labelled for v1. The single-labeller bias is the largest open
-          methodological risk and is named below under known limits. v1.1
-          will add a 20% peer second-pass on fit-score and claims-allowed
-          labels with Cohen&apos;s kappa reported on the scorecard.
+          v1 was solo-labelled, which is the largest open methodological
+          risk and is named below under known limits. v1.1 will add a 20%
+          peer second-pass on fit-score and claims-allowed labels with
+          Cohen&apos;s kappa reported on the scorecard.
         </p>
       </section>
 
@@ -229,7 +229,7 @@ export default function MethodologyPage() {
             to consumer revenue&rdquo;
           </dt>
           <dd>
-            Discovered while labelling Exemplar 2 (Moodboard, a Series A
+            The gap surfaced while labelling Exemplar 2 (Moodboard, a Series A
             consumer-led app with a B2B API side). The original rubric
             treated B2B SaaS as binary, so a hybrid landed on 1.0 by
             virtue of the AI-feature signal even though the B2B surface
@@ -245,8 +245,9 @@ export default function MethodologyPage() {
             confirmed technical background&rdquo;
           </dt>
           <dd>
-            Same trigger. The original rubric reserved 1.0 for technical
-            Founder/CTO and dropped non-technical founders to 0.25 via
+            The same rubric review surfaced this anchor. The original
+            rubric reserved 1.0 for technical Founder/CTO and dropped
+            non-technical founders to 0.25 via
             &ldquo;mismatched on either axis.&rdquo; That ignored
             decision authority, which is the core thing{" "}
             <code className={styles.code}>target_roles</code> is meant to
@@ -260,14 +261,15 @@ export default function MethodologyPage() {
             → 0.65
           </dt>
           <dd>
-            Re-justification, not a rubric edit. With the two anchors
-            above lifted, the dimension average moved from 0.75 to 0.80
-            and the original 0.55 holistic was double-discounting the
-            same signals the new anchors now carry. The 0.65 vs 0.80 gap
-            captures the labeller&apos;s residual discount for the
-            absolute size of the B2B revenue surface relative to the
-            consumer business — a signal the 0.75 anchor does not fully
-            express. Routing stays <code className={styles.code}>propose</code>.
+            This entry re-justifies the holistic fit score without
+            editing the rubric. With the two anchors above lifted, the
+            dimension average moved from 0.75 to 0.80, and the original
+            0.55 holistic was double-discounting the same signals the
+            new anchors now carry. The 0.65 vs 0.80 gap captures the
+            labeller&apos;s residual discount for the absolute size of
+            the B2B revenue surface relative to the consumer business,
+            which the 0.75 anchor does not fully express. Routing stays{" "}
+            <code className={styles.code}>propose</code>.
           </dd>
           <dt>
             <strong>2026-05-12 ·</strong> Hook coherence judge · 1-5
@@ -275,8 +277,8 @@ export default function MethodologyPage() {
           </dt>
           <dd>
             The plan originally specified a 1-5 rubric for hook
-            coherence. Cross-checked against Hamel Husain&apos;s LLM-as-a-Judge
-            writeup, which is categorical that Likert scales produce
+            coherence. Cross-checked against the LLM-as-judge evaluation
+            literature, which is categorical that Likert scales produce
             false confidence and that the critique is where the real
             information lives. Replaced with a binary{" "}
             <code className={styles.code}>passes</code> field plus a
@@ -327,7 +329,7 @@ export default function MethodologyPage() {
             <strong>Substring grounding:</strong> per claim, does the model&apos;s{" "}
             <code className={styles.code}>source_quote</code> appear verbatim
             in the input (whitespace-normalised, case-insensitive)? A
-            substring miss is automatic ungrounded — no judge call needed.
+            substring miss is automatic ungrounded, so no judge call runs.
           </li>
           <li>
             <strong>Latency p50, p95.</strong> Per-call wall clock measured
@@ -374,15 +376,16 @@ export default function MethodologyPage() {
           <code className={styles.code}>OPENAI_GROUNDING_MODEL</code>). The
           scorecard publishes three values: Sonnet grounding rate, OpenAI
           judge grounding rate, and Cohen&apos;s kappa between them. The{" "}
-          <em>lower of the two rates</em> is the headline number quoted to
-          prospects — conservative read, no cherry-picking.
+          <em>lower of the two rates</em> is the headline number, which
+          gives prospects the conservative read.
         </p>
         <h3>Hook pass rate</h3>
         <p>
           Binary pass/fail with a written critique, single judge
-          (GPT-5-mini). No Likert scale — the literature on LLM-as-judge
-          (Husain, Shankar) is consistent that 1-5 numeric rubrics create
-          false confidence and the critique is where the learning lives.
+          (GPT-5-mini). There is no Likert scale. The literature on
+          LLM-as-judge (Husain, Shankar) is consistent that 1-5 numeric
+          rubrics create false confidence and the critique is where the
+          learning lives.
           Pass criteria are baked into the prompt so re-runs are stable.
         </p>
         <p>
@@ -401,7 +404,7 @@ export default function MethodologyPage() {
           been drafted at all).
         </p>
         <p>
-          The critique is required for both outcomes — it names the
+          The critique is required for both outcomes, since it names the
           specific evidence in the input that the hook did or did not
           ground in. A pass without a substantive critique is not a real
           pass; those land in the scorecard&apos;s judgements list for
@@ -411,22 +414,22 @@ export default function MethodologyPage() {
         <p>
           GPT-5 is meaningfully stricter than the Sonnet judge on integrated
           (10-25pp lower grounding rate; less so on chat). Integrated
-          produces more claims with more specificity — canonical-label
-          normalizations like &quot;B2B SaaS workflow automation&quot; —
-          and GPT-5 marks more of them insufficiently supported by the
-          source quote. Since the headline takes the lower of the two,
+          produces more claims with more specificity, including
+          canonical-label normalizations like
+          &quot;B2B SaaS workflow automation&quot;, and GPT-5 marks more
+          of them insufficiently supported by the source quote. Since the headline takes the lower of the two,
           this can pull integrated&apos;s headline grounding below
           chat&apos;s on the same run. Cohen&apos;s kappa in the 0.2-0.4
-          range is itself the signal here — the judges genuinely disagree
-          on borderline cases.
+          range is itself the signal: the judges genuinely disagree on
+          borderline cases.
         </p>
         <p>
           Hook pass rate is scored only over items where a hook was
           extractable. Chat refusals on adversarial inputs (jailbreak,
           fake rubric) produce no structured hook to judge and drop out
           of the chat denominator, which can inflate chat&apos;s apparent
-          pass rate. The deterministic metrics — classification accuracy,
-          action accuracy, substring grounding, per-field accuracy —
+          pass rate. The deterministic metrics (classification accuracy,
+          action accuracy, substring grounding, per-field accuracy)
           score every item including refusals, so they&apos;re the
           load-bearing cross-mode comparison. The judge-mediated metrics
           report what the scorable subset looks like.
@@ -465,8 +468,8 @@ export default function MethodologyPage() {
           Reported drops are in classification accuracy, fit-score
           correlation, and claim-grounding rate vs the main pass. The
           injection variant is the most likely to surface a real failure
-          mode for the integrated build — a model citing injection text in a
-          claim quote passes the substring check while still being
+          mode for the integrated build. A model citing injection text in
+          a claim quote passes the substring check while still being
           semantically ungrounded. The eval-and-fix loop on the scorecard
           surfaces incidents like this with both pre-fix and post-fix
           snapshots committed.
@@ -476,9 +479,8 @@ export default function MethodologyPage() {
       <section id="cross-mode" className={styles.section}>
         <h2>9. Cross-mode comparison framing</h2>
         <p>
-          This is a <strong>bundle-vs-bundle</strong> comparison, not a
-          controlled A/B test of contract discipline alone. The two builds
-          differ in four ways at once:
+          The scorecard is a <strong>bundle-vs-bundle</strong> comparison.
+          The two builds differ in four ways at once:
         </p>
         <ul>
           <li>
@@ -504,15 +506,16 @@ export default function MethodologyPage() {
         <p>
           The scorecard treats these as one bundle because that is what a
           product team actually ships. Chat surfaces do not typically expose
-          thinking deltas in the UI — the affordance does not fit. Structured
-          backends often do. The realistic comparison is product-surface-A vs
+          thinking deltas in the UI, since the affordance does not fit.
+          Structured backends often do. The realistic comparison is
+          product-surface-A vs
           product-surface-B, not contract-vs-contract under matched compute.
           The chat build is polished to the same product standard as
           integrated; neither side is a strawman.
         </p>
         <p>
-          A stricter version of this question — &ldquo;does the schema
-          discipline win even with thinking equal?&rdquo; — would run both
+          A stricter version of this question (&ldquo;does the schema
+          discipline win even with thinking equal?&rdquo;) would run both
           modes with thinking matched (both on, or both off). That is a
           separate, sharper claim that the current eval does not make. It is
           on the roadmap as a second panel; the result would either reinforce
@@ -522,8 +525,8 @@ export default function MethodologyPage() {
           The chat build&apos;s free-form output is parsed back to the
           structured schema by the Haiku 4.5 extractor pass mentioned above,
           so both modes score against the same gold labels. The extractor
-          sees the chat output only, never the original input — it cannot
-          hallucinate grounding. If the chat reply omitted a source quote,
+          sees the chat output only, never the original input, so it
+          cannot hallucinate grounding. If the chat reply omitted a source quote,
           no extracted claim has one either.
         </p>
       </section>
@@ -543,7 +546,7 @@ export default function MethodologyPage() {
             paths (cheap anchor subset, no judges). Canonical scorecard
             snapshots refresh on demand via{" "}
             <code className={styles.code}>workflow_dispatch</code>, not on
-            a fixed schedule — the demo doesn&apos;t ship daily, so a
+            a fixed schedule. The demo doesn&apos;t ship daily, so a
             time-based cron mostly re-runs identical experiments.
           </li>
           <li>
@@ -570,7 +573,7 @@ export default function MethodologyPage() {
           contact-link-clicked-from-result). Funnel data is not adoption
           data. Real adoption measurement requires real users on a deployed
           feature over time. The eval scorecard is a cold benchmark on a
-          static test set — it tells you how the system performs on
+          static test set. It tells you how the system performs on
           labelled examples, not how it performs on your actual pipeline.
         </p>
       </section>
@@ -645,9 +648,9 @@ export default function MethodologyPage() {
           </li>
         </ol>
         <p className={styles.callout}>
-          The v2 build is where this stops being a portfolio demo and
-          becomes a feature wired into a customer&apos;s revenue stack. If
-          that&apos;s the conversation, book a call from the homepage.
+          v2 is where this becomes a feature wired into a customer&apos;s
+          revenue stack. Book a call from the homepage if you want that
+          conversation.
         </p>
       </section>
     </main>

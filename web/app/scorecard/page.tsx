@@ -98,14 +98,14 @@ function Scorecard({
             integrated={snapshot.headline.integrated.judge_grounding_rate}
             chat={snapshot.headline.chat.judge_grounding_rate}
             kind="percent"
-            help="Lower of (Opus 4.7 grounding rate, GPT-5 grounding rate). Conservative read."
+            help="Lower of (Opus 4.7 grounding rate, GPT-5 grounding rate), the conservative read."
           />
           <HeadlineCard
             label="Hook pass rate"
             integrated={snapshot.headline.integrated.hook_pass_rate}
             chat={snapshot.headline.chat.hook_pass_rate}
             kind="percent"
-            help="Single GPT-5-mini judge. Binary pass/fail with critique — no scales."
+            help="Single GPT-5-mini judge. Binary pass/fail with critique, no scales."
           />
           <HeadlineCard
             label="Latency p50"
@@ -361,19 +361,19 @@ function ModeColumn({ title, mode }: { title: string; mode: ModeBlock }) {
       <dl className={styles.kv}>
         <KV k="Success rate" v={fmtPercent(a.success_rate)} />
         <KV
-          k="Classification — industry"
+          k="Classification: industry"
           v={fmtPercent(a.classification_per_field.industry)}
         />
         <KV
-          k="Classification — segment"
+          k="Classification: segment"
           v={fmtPercent(a.classification_per_field.segment)}
         />
         <KV
-          k="Classification — seniority"
+          k="Classification: seniority"
           v={fmtPercent(a.classification_per_field.seniority)}
         />
         <KV
-          k="Classification — company_size"
+          k="Classification: company_size"
           v={fmtPercent(a.classification_per_field.company_size)}
         />
         <KV k="Fit Pearson" v={fmtNumber(a.fit_pearson)} />

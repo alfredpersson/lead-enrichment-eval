@@ -24,7 +24,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body>
         <div className="best-on-desktop">
-          Best on a desktop. The demo still works on mobile.
+          Best on desktop, but the demo still works on mobile.
         </div>
         <SiteNav />
         {children}

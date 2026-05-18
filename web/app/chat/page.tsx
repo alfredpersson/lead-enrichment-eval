@@ -650,9 +650,8 @@ export default function ChatPage() {
       <header className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Lead queue</h1>
         <p className={styles.pageLede}>
-          Click a lead to focus the assistant on it, then ask follow-ups,
-          compare candidates, or draft outreach. Set a status when you&rsquo;ve
-          decided.
+          Click a lead to focus the assistant on it, then ask follow-ups or
+          draft outreach. Set a status when you&rsquo;ve decided.
         </p>
       </header>
 
@@ -846,9 +845,9 @@ export default function ChatPage() {
                 </button>
                 {privacyOpen && (
                   <div className={styles.privacyTooltip} role="tooltip">
-                    Conversations are saved in your browser only — never to our
-                    servers. Each profile is sent to Anthropic for analysis
-                    under their API data policy.{" "}
+                    Conversations are saved in your browser only, never on
+                    our servers. Each profile is sent to Anthropic for
+                    analysis under their API data policy.{" "}
                     <Link href="/privacy">More</Link>
                   </div>
                 )}
@@ -856,7 +855,7 @@ export default function ChatPage() {
               {overCap && (
                 <span className={styles.counterOver} aria-live="polite">
                   {formatNumber(composer.length)} / {formatNumber(COMPOSER_CAP)}{" "}
-                  chars — over cap
+                  chars, over cap
                 </span>
               )}
               <button

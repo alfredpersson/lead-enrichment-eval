@@ -89,7 +89,6 @@ interface Row {
   company: string | null;
   status: RowStatus;
   selected: boolean;
-  expanded: boolean;
   underTheHood: boolean;
   thinking: string;
   result: EnrichOutput | null;
@@ -104,7 +103,6 @@ function exemplarToRow(ex: Exemplar, createdAt: number): Row {
     ...exemplarToLead(ex),
     status: "idle",
     selected: false,
-    expanded: false,
     underTheHood: false,
     thinking: "",
     result: null,
@@ -396,192 +394,269 @@ function ActionChip({ row }: { row: Row }) {
   );
 }
 
-function SkeletonDrawer({ row }: { row: Row }) {
-  const inputText = rowInputText(row);
+function SourcePane({
+  profile,
+  company,
+  hoveredQuote = null,
+}: {
+  profile: string;
+  company: string | null;
+  hoveredQuote?: string | null;
+}) {
   return (
-    <div className={styles.drawer}>
-      <div className={styles.drawerGrid}>
-        <section className={styles.drawerLeft}>
-          <div className={styles.chips}>
-            <span className={`${styles.skelChip} ${styles.skel}`} style={{ width: "7rem" }} />
-            <span className={`${styles.skelChip} ${styles.skel}`} style={{ width: "11rem" }} />
-            <span className={`${styles.skelChip} ${styles.skel}`} style={{ width: "7rem" }} />
-            <span className={`${styles.skelChip} ${styles.skel}`} style={{ width: "8rem" }} />
-          </div>
-          <div className={styles.fitRow}>
-            <span className={`${styles.skel} ${styles.skelFit}`} />
-            <span className={styles.fitOutOf}>fit score / 1.00</span>
-          </div>
-          <div className={styles.dimensions}>
-            {DIMENSION_LABELS.map(([, label]) => (
-              <div key={label} className={styles.dim}>
-                <span className={styles.dimLabel}>{label}</span>
-                <span className={styles.dimBar} />
-                <span className={`${styles.skel} ${styles.skelDimValue}`} />
-              </div>
-            ))}
-          </div>
-          <div className={styles.claimsHeader}>
-            <span className={styles.sectionLabel}>Claims</span>
-          </div>
-          <div className={styles.claims}>
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className={styles.skelClaim}>
-                <span className={`${styles.skel} ${styles.skelClaimLine}`} />
-                <span className={`${styles.skel} ${styles.skelClaimQuote}`} />
-              </div>
-            ))}
-          </div>
-          <div className={styles.hook}>
-            <span className={`${styles.skel} ${styles.skelHookLine}`} />
-            <span
-              className={`${styles.skel} ${styles.skelHookLine}`}
-              style={{ width: "65%" }}
-            />
-          </div>
-          <div className={styles.actionRow}>
-            <span className={styles.actionMeta}>Recommended action</span>
-            <span className={`${styles.skel} ${styles.skelActionButton}`} />
-          </div>
-        </section>
-        <aside className={styles.drawerRight}>
-          <span className={styles.sectionLabel}>Source</span>
-          <div className={styles.inputView}>{inputText}</div>
-        </aside>
+    <section className={styles.sourcePane}>
+      <span className={styles.sectionLabel}>
+        Source{" "}
+        {hoveredQuote && (
+          <span className={styles.muted}>· highlighting quote</span>
+        )}
+      </span>
+      <div className={styles.sourceSection}>
+        <span className={styles.sourceSectionLabel}>Profile</span>
+        <div className={styles.inputView}>
+          {highlightInput(profile, hoveredQuote)}
+        </div>
       </div>
-    </div>
+      {company !== null && (
+        <div className={styles.sourceSection}>
+          <span className={styles.sourceSectionLabel}>Company</span>
+          <div className={styles.inputView}>
+            {highlightInput(company, hoveredQuote)}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
-function RowDrawer({
+function SkeletonBody({ row }: { row: Row }) {
+  return (
+    <>
+      <div className={styles.chips}>
+        <span className={`${styles.skelChip} ${styles.skel}`} style={{ width: "7rem" }} />
+        <span className={`${styles.skelChip} ${styles.skel}`} style={{ width: "11rem" }} />
+        <span className={`${styles.skelChip} ${styles.skel}`} style={{ width: "7rem" }} />
+        <span className={`${styles.skelChip} ${styles.skel}`} style={{ width: "8rem" }} />
+      </div>
+      <div className={styles.fitRow}>
+        <span className={`${styles.skel} ${styles.skelFit}`} />
+        <span className={styles.fitOutOf}>fit score / 1.00</span>
+      </div>
+      <div className={styles.dimensions}>
+        {DIMENSION_LABELS.map(([, label]) => (
+          <div key={label} className={styles.dim}>
+            <span className={styles.dimLabel}>{label}</span>
+            <span className={styles.dimBar} />
+            <span className={`${styles.skel} ${styles.skelDimValue}`} />
+          </div>
+        ))}
+      </div>
+      <SourcePane profile={row.profile} company={row.company} />
+      <div className={styles.claimsHeader}>
+        <span className={styles.sectionLabel}>Claims</span>
+      </div>
+      <div className={styles.claims}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className={styles.skelClaim}>
+            <span className={`${styles.skel} ${styles.skelClaimLine}`} />
+            <span className={`${styles.skel} ${styles.skelClaimQuote}`} />
+          </div>
+        ))}
+      </div>
+      <div className={styles.hook}>
+        <span className={`${styles.skel} ${styles.skelHookLine}`} />
+        <span
+          className={`${styles.skel} ${styles.skelHookLine}`}
+          style={{ width: "65%" }}
+        />
+      </div>
+    </>
+  );
+}
+
+function SidepanelBody({
   row,
-  onAct,
   onHover,
   onToggleUnderHood,
 }: {
   row: Row;
-  onAct: () => void;
   onHover: (q: string | null) => void;
   onToggleUnderHood: () => void;
 }) {
-  const result = row.result;
   if (row.error) {
     return (
-      <div className={styles.drawer}>
-        <div className={styles.errorBanner}>
-          <strong>{row.error.code}</strong> · {row.error.message}
-        </div>
+      <div className={styles.errorBanner}>
+        <strong>{row.error.code}</strong> · {row.error.message}
       </div>
     );
   }
+  const result = row.result;
   if (!result) {
     if (row.status === "streaming") {
-      return <SkeletonDrawer row={row} />;
+      return <SkeletonBody row={row} />;
     }
     return (
-      <div className={styles.drawer}>
+      <>
         <p className={styles.muted}>
-          Run this row to see the structured output.
+          Select this lead and press Run to score it.
         </p>
-      </div>
+        <SourcePane profile={row.profile} company={row.company} />
+      </>
     );
   }
   const c = result.classification;
   const fit = result.fit_score;
   const inputText = rowInputText(row);
   return (
-    <div className={styles.drawer}>
-      <div className={styles.drawerGrid}>
-        <section className={styles.drawerLeft}>
-          <div className={styles.chips}>
-            <span className={styles.chip}>{c.industry}</span>
-            <span className={styles.chip}>{c.segment}</span>
-            <span className={`${styles.chip} ${styles.chipMuted}`}>
-              Seniority · {c.seniority}
-            </span>
-            <span className={`${styles.chip} ${styles.chipMuted}`}>
-              Headcount · {c.company_size}
-            </span>
-          </div>
-          <div className={styles.fitRow}>
-            <span className={styles.fitValue}>{fit.value.toFixed(2)}</span>
-            <span className={styles.fitOutOf}>fit score / 1.00</span>
-          </div>
-          <FitDimensionsView dims={fit.dimensions} />
-          <div className={styles.claimsHeader}>
-            <span className={styles.sectionLabel}>Claims</span>
-          </div>
-          <ClaimsList
-            claims={result.claims}
-            inputText={inputText}
-            onHover={onHover}
-          />
-          <HookView hook={result.draft_hook} />
-          <div className={styles.actionRow}>
-            <span className={styles.actionMeta}>
-              Recommended · <strong>{result.action.replace("_", " ")}</strong>
-            </span>
+    <>
+      <div className={styles.chips}>
+        <span className={styles.chip}>{c.industry}</span>
+        <span className={styles.chip}>{c.segment}</span>
+        <span className={`${styles.chip} ${styles.chipMuted}`}>
+          Seniority · {c.seniority}
+        </span>
+        <span className={`${styles.chip} ${styles.chipMuted}`}>
+          Headcount · {c.company_size}
+        </span>
+      </div>
+      <div className={styles.fitRow}>
+        <span className={styles.fitValue}>{fit.value.toFixed(2)}</span>
+        <span className={styles.fitOutOf}>fit score / 1.00</span>
+      </div>
+      <FitDimensionsView dims={fit.dimensions} />
+      <SourcePane
+        profile={row.profile}
+        company={row.company}
+        hoveredQuote={row.hoveredQuote}
+      />
+      <div className={styles.claimsHeader}>
+        <span className={styles.sectionLabel}>Claims</span>
+      </div>
+      <ClaimsList
+        claims={result.claims}
+        inputText={inputText}
+        onHover={onHover}
+      />
+      <HookView hook={result.draft_hook} />
+      <UnderTheHood row={row} onToggle={onToggleUnderHood} />
+    </>
+  );
+}
+
+function Sidepanel({
+  row,
+  onClose,
+  onAct,
+  onHover,
+  onToggleUnderHood,
+}: {
+  row: Row | null;
+  onClose: () => void;
+  onAct: () => void;
+  onHover: (q: string | null) => void;
+  onToggleUnderHood: () => void;
+}) {
+  const open = row !== null;
+  const result = row?.result ?? null;
+  return (
+    <aside
+      className={`${styles.sidepanel} ${open ? styles.sidepanelOpen : ""}`}
+      aria-hidden={!open}
+      aria-label="Lead details"
+    >
+      {row && (
+        <>
+          <header className={styles.sidepanelHeader}>
+            <div className={styles.sidepanelTitle}>
+              <h2 className={styles.sidepanelName}>{row.leadName}</h2>
+              {row.title && (
+                <p className={styles.sidepanelSubtitle}>{row.title}</p>
+              )}
+              {row.companyName && (
+                <p className={styles.sidepanelCompany}>{row.companyName}</p>
+              )}
+            </div>
             <button
               type="button"
-              className={`${styles.actionButton} ${
-                result.action === "discard" || result.action === "refuse"
-                  ? styles.actionButtonMuted
-                  : ""
-              }`}
-              onClick={onAct}
-              disabled={Boolean(row.confirmedAt)}
+              className={styles.sidepanelClose}
+              onClick={onClose}
+              aria-label="Close panel"
             >
-              {row.confirmedAt ? "Confirmed" : ACTION_LABELS[result.action]}
+              ✕
             </button>
+          </header>
+          <div className={styles.sidepanelBody}>
+            <SidepanelBody
+              row={row}
+              onHover={onHover}
+              onToggleUnderHood={onToggleUnderHood}
+            />
           </div>
-        </section>
-        <aside className={styles.drawerRight}>
-          <span className={styles.sectionLabel}>
-            Source{" "}
-            {row.hoveredQuote && (
-              <span className={styles.muted}>· highlighting quote</span>
-            )}
-          </span>
-          <div className={styles.inputView}>
-            {highlightInput(inputText, row.hoveredQuote)}
-          </div>
-        </aside>
-      </div>
-      <UnderTheHood row={row} onToggle={onToggleUnderHood} />
-    </div>
+          {result && !row.error && (
+            <footer className={styles.sidepanelFooter}>
+              <span className={styles.actionMeta}>
+                Recommended · <strong>{result.action.replace("_", " ")}</strong>
+              </span>
+              <button
+                type="button"
+                className={`${styles.actionButton} ${
+                  result.action === "discard" || result.action === "refuse"
+                    ? styles.actionButtonMuted
+                    : ""
+                }`}
+                onClick={onAct}
+                disabled={Boolean(row.confirmedAt)}
+              >
+                {row.confirmedAt ? "Confirmed" : ACTION_LABELS[result.action]}
+              </button>
+            </footer>
+          )}
+        </>
+      )}
+    </aside>
   );
 }
 
 function QueueRow({
   row,
+  isSelected,
   onToggleSelect,
-  onToggleExpand,
-  onAct,
-  onHover,
-  onToggleUnderHood,
+  onSelectRow,
   disableSelection,
 }: {
   row: Row;
+  isSelected: boolean;
   onToggleSelect: () => void;
-  onToggleExpand: () => void;
-  onAct: () => void;
-  onHover: (q: string | null) => void;
-  onToggleUnderHood: () => void;
+  onSelectRow: () => void;
   disableSelection: boolean;
 }) {
   return (
     <div
-      className={`${styles.row} ${row.expanded ? styles.rowExpanded : ""} ${
+      className={`${styles.row} ${isSelected ? styles.rowSelected : ""} ${
         row.confirmedAt ? styles.rowConfirmed : ""
       }`}
       data-status={row.status}
     >
-      <div className={styles.rowSummary}>
+      <div
+        className={styles.rowSummary}
+        onClick={onSelectRow}
+        role="button"
+        tabIndex={0}
+        aria-pressed={isSelected}
+        aria-label={`View details for ${row.leadName}`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelectRow();
+          }
+        }}
+      >
         <input
           type="checkbox"
           className={styles.rowCheck}
           checked={row.selected}
           onChange={onToggleSelect}
+          onClick={(e) => e.stopPropagation()}
           disabled={disableSelection || row.status === "streaming"}
           aria-label={`Select ${row.leadName}`}
         />
@@ -600,24 +675,7 @@ function QueueRow({
         <span className={styles.rowAction}>
           <ActionChip row={row} />
         </span>
-        <button
-          type="button"
-          className={styles.rowExpandBtn}
-          onClick={onToggleExpand}
-          aria-expanded={row.expanded}
-          aria-label={row.expanded ? "Collapse row" : "Expand row"}
-        >
-          {row.expanded ? "▾" : "▸"}
-        </button>
       </div>
-      {row.expanded && (
-        <RowDrawer
-          row={row}
-          onAct={onAct}
-          onHover={onHover}
-          onToggleUnderHood={onToggleUnderHood}
-        />
-      )}
     </div>
   );
 }
@@ -638,7 +696,7 @@ function Composer({
   return (
     <details className={styles.composer}>
       <summary className={styles.composerSummary}>
-        Add your own lead
+        <span className={styles.composerToggle}>Add your own lead</span>
       </summary>
       <div className={styles.composerBody}>
         <div className={styles.field}>
@@ -699,6 +757,18 @@ export default function IntegratedPage() {
     () => new Set(ACTION_FILTER_ORDER),
   );
   const [sortBy, setSortBy] = useState<SortBy>("recent");
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  const selectedRow = useMemo(
+    () => rows.find((r) => r.id === selectedRowId) ?? null,
+    [rows, selectedRowId],
+  );
+
+  useEffect(() => {
+    if (selectedRowId !== null && !selectedRow) {
+      setSelectedRowId(null);
+    }
+  }, [selectedRow, selectedRowId]);
 
   const updateRow = useCallback(
     (id: string, patch: Partial<Row> | ((r: Row) => Partial<Row>)) => {
@@ -810,10 +880,12 @@ export default function IntegratedPage() {
     );
   }, []);
 
-  const onToggleExpand = useCallback((id: string) => {
-    setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, expanded: !r.expanded } : r)),
-    );
+  const onSelectRow = useCallback((id: string) => {
+    setSelectedRowId((prev) => (prev === id ? null : id));
+  }, []);
+
+  const onCloseSidepanel = useCallback(() => {
+    setSelectedRowId(null);
   }, []);
 
   const onToggleUnderHood = useCallback((id: string) => {
@@ -854,7 +926,6 @@ export default function IntegratedPage() {
         company,
         status: "idle",
         selected: true,
-        expanded: false,
         underTheHood: false,
         thinking: "",
         result: null,
@@ -974,8 +1045,11 @@ export default function IntegratedPage() {
       abortControllers.current.get(id)?.abort();
       abortControllers.current.delete(id);
     }
+    if (selectedRowId && toRemove.has(selectedRowId)) {
+      setSelectedRowId(null);
+    }
     setRows((prev) => prev.filter((r) => !toRemove.has(r.id)));
-  }, [rows]);
+  }, [rows, selectedRowId]);
 
   useEffect(() => {
     const controllers = abortControllers.current;
@@ -984,13 +1058,24 @@ export default function IntegratedPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (selectedRowId === null) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setSelectedRowId(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedRowId]);
+
+  const panelOpen = selectedRow !== null;
+
   return (
-    <main>
+    <main className={panelOpen ? styles.mainWithPanel : undefined}>
       <h1 className={styles.heroTitle}>Triage new leads against your ICP</h1>
       <p className={styles.heroLede}>
         Each lead gets a fit score, a set of grounded claims, a drafted
         outreach hook, and a recommended action. Select leads, run them, and
-        expand a row for the full breakdown.
+        click a row to open the full breakdown in the side panel.
       </p>
 
       <div className={styles.queue}>
@@ -998,7 +1083,7 @@ export default function IntegratedPage() {
           <div className={styles.queueHeaderLeft}>
             <button
               type="button"
-              className={styles.linkButton}
+              className={styles.secondaryButton}
               onClick={anySelected ? onClearSelection : onSelectAll}
             >
               {anySelected ? "Clear selection" : "Select all visible"}
@@ -1084,7 +1169,6 @@ export default function IntegratedPage() {
           <span>Company</span>
           <span>Fit</span>
           <span>Action</span>
-          <span />
         </div>
 
         {visibleRows.length === 0 ? (
@@ -1100,12 +1184,10 @@ export default function IntegratedPage() {
               <QueueRow
                 key={row.id}
                 row={row}
+                isSelected={row.id === selectedRowId}
                 disableSelection={anyStreaming}
                 onToggleSelect={() => onToggleSelect(row.id)}
-                onToggleExpand={() => onToggleExpand(row.id)}
-                onAct={() => onConfirm(row.id)}
-                onHover={(q) => onHover(row.id, q)}
-                onToggleUnderHood={() => onToggleUnderHood(row.id)}
+                onSelectRow={() => onSelectRow(row.id)}
               />
             ))}
           </div>
@@ -1113,6 +1195,16 @@ export default function IntegratedPage() {
 
         <Composer onAdd={onAddPaste} disabled={anyStreaming} />
       </div>
+
+      <Sidepanel
+        row={selectedRow}
+        onClose={onCloseSidepanel}
+        onAct={() => selectedRow && onConfirm(selectedRow.id)}
+        onHover={(q) => selectedRow && onHover(selectedRow.id, q)}
+        onToggleUnderHood={() =>
+          selectedRow && onToggleUnderHood(selectedRow.id)
+        }
+      />
     </main>
   );
 }

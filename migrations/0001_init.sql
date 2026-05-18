@@ -48,9 +48,10 @@ CREATE TABLE IF NOT EXISTS eval_set (
     created_at    timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS eval_set_embedding_idx
-    ON eval_set USING ivfflat (embedding vector_cosine_ops)
-    WITH (lists = 100);
+-- No ANN index on eval_set.embedding: at v1's 73 rows a sequential scan over
+-- 1024-dim cosine is exact and sub-millisecond. IVFFlat needs ~1000+ rows per
+-- list to deliver useful recall, so a small-N index is strictly worse than no
+-- index. Revisit when the test set crosses ~5K rows.
 
 -- Nightly eval results, one row per (run, mode).
 CREATE TABLE IF NOT EXISTS eval_runs (

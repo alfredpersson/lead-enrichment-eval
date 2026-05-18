@@ -286,6 +286,44 @@ export default function MethodologyPage() {
             <code className={styles.code}>critique</code> that names
             the specific evidence. Schema version bumped 2 → 3.
           </dd>
+          <dt>
+            <strong>2026-05-12 ·</strong> Robustness perturbations ·
+            paraphrase + field_shuffle → sentence_reorder
+          </dt>
+          <dd>
+            The plan listed{" "}
+            <code className={styles.code}>typos</code>,{" "}
+            <code className={styles.code}>paraphrase</code>,{" "}
+            <code className={styles.code}>field_shuffle</code>, and{" "}
+            <code className={styles.code}>injection</code> as the
+            perturbation set. <code className={styles.code}>paraphrase</code>{" "}
+            was replaced with{" "}
+            <code className={styles.code}>sentence_reorder</code> (swaps
+            neighbouring sentences without editing inside them) because
+            paraphrase requires a per-item LLM call that would dominate
+            eval cost and could itself drift; the substitution preserves
+            source-quote substrings exactly.{" "}
+            <code className={styles.code}>field_shuffle</code> was
+            dropped: the inputs are already a profile + an optional
+            company block, so &ldquo;shuffling&rdquo; them on a 2-field
+            schema either no-ops or destroys the input. An LLM-driven
+            paraphrase variant remains on the v1.1 list.
+          </dd>
+          <dt>
+            <strong>2026-05-14 ·</strong> Anthropic grounding judge ·
+            Claude Opus 4.7 → Claude Sonnet 4.6
+          </dt>
+          <dd>
+            The plan specified Claude Opus 4.7 as the Anthropic-side
+            grounding judge. Swapped to Claude Sonnet 4.6 during the
+            cost-reduction pass: at the volume the nightly eval runs
+            (73 items × claims-per-item × 2 modes), Opus pricing was
+            the largest non-inference line item without a measurable
+            quality lift over Sonnet on this judging task. Cohen&apos;s
+            kappa with the OpenAI judge stayed in the same range
+            after the swap, so the conservative-read headline (lower
+            of the two grounding rates) is unaffected.
+          </dd>
         </dl>
         <p>
           The cadence going forward: when a rubric edit affects a gold

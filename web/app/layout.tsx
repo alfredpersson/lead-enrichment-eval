@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SiteNav } from "./site-nav";
 
@@ -28,6 +29,7 @@ export default function RootLayout({
         </div>
         <SiteNav />
         {children}
+        <Analytics />
       </body>
     </html>
   );

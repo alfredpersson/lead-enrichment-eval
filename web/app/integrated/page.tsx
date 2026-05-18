@@ -16,6 +16,7 @@ import {
   exemplarToLead,
 } from "@/lib/leads";
 import { parseSseStream } from "@/lib/sse";
+import { track } from "@/lib/analytics";
 import { LowSimilarityBadge } from "@/app/_shared/low-similarity-badge";
 import { QueueEmpty } from "@/app/_shared/queue-empty";
 import type {
@@ -643,7 +644,12 @@ function QueueRow({
     >
       <div
         className={styles.rowSummary}
-        onClick={onSelectRow}
+        onClick={() => {
+          if (row.source === "exemplar" && !isSelected) {
+            track({ name: "example-loaded", props: { surface: "integrated", exampleId: row.id } });
+          }
+          onSelectRow();
+        }}
         role="button"
         tabIndex={0}
         aria-pressed={isSelected}
@@ -651,6 +657,9 @@ function QueueRow({
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
+            if (row.source === "exemplar" && !isSelected) {
+              track({ name: "example-loaded", props: { surface: "integrated", exampleId: row.id } });
+            }
             onSelectRow();
           }
         }}
@@ -739,6 +748,7 @@ function Composer({
             disabled={!canAdd}
             onClick={() => {
               onAdd(profile, company.trim() ? company : null);
+              track({ name: "own-input-pasted", props: { surface: "integrated" } });
               setProfile("");
               setCompany("");
             }}
@@ -755,6 +765,20 @@ export default function IntegratedPage() {
   const [rows, setRows] = useState<Row[]>(INITIAL_ROWS);
   const abortControllers = useRef<Map<string, AbortController>>(new Map());
   const pasteCounter = useRef(1);
+  const lastLowFitRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const onHide = () => {
+      if (lastLowFitRef.current !== null) {
+        track({
+          name: "page-bounce-after-low-fit",
+          props: { fitScore: lastLowFitRef.current },
+        });
+      }
+    };
+    window.addEventListener("pagehide", onHide);
+    return () => window.removeEventListener("pagehide", onHide);
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilters, setActionFilters] = useState<Set<ActionFilter>>(
@@ -838,6 +862,16 @@ export default function IntegratedPage() {
               selected: false,
             });
             terminal = true;
+            const fit = event.output.fit_score.value;
+            track({
+              name: "completion",
+              props: {
+                surface: "integrated",
+                action: event.output.action,
+                fitScore: fit,
+              },
+            });
+            if (fit < 0.5) lastLowFitRef.current = fit;
           } else if (event.type === "error") {
             updateRow(rowSnapshot.id, {
               status: "error",
@@ -845,6 +879,7 @@ export default function IntegratedPage() {
               error: { code: event.code, message: event.message },
             });
             terminal = true;
+            track({ name: "error", props: { surface: "integrated", kind: event.code } });
           }
         });
         if (!terminal) {
@@ -856,6 +891,7 @@ export default function IntegratedPage() {
               message: "Stream ended without a result.",
             },
           });
+          track({ name: "error", props: { surface: "integrated", kind: "stream_ended" } });
         }
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
@@ -867,6 +903,7 @@ export default function IntegratedPage() {
             message: (err as Error).message ?? "Network error",
           },
         });
+        track({ name: "error", props: { surface: "integrated", kind: "network" } });
       } finally {
         abortControllers.current.delete(rowSnapshot.id);
       }

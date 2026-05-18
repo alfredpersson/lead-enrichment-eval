@@ -7,6 +7,7 @@ Modal container (`services/app.py`) or directly with uvicorn for local dev
 from __future__ import annotations
 
 import json
+import os
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -17,6 +18,24 @@ from services.embeddings import find_neighbours
 from services.enrich import enrich_lead_stream
 from services.ratelimit import check_and_consume
 from services.validation import ValidationError
+
+
+def _init_sentry() -> None:
+    """Initialise Sentry from SENTRY_DSN env var. No-op when unset."""
+    dsn = os.environ.get("SENTRY_DSN")
+    if not dsn:
+        return
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=dsn,
+        traces_sample_rate=0.1,
+        environment=os.environ.get("APP_ENV", "local"),
+        send_default_pii=False,
+    )
+
+
+_init_sentry()
 
 
 class EnrichRequest(BaseModel):

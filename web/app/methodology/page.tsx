@@ -1,3 +1,5 @@
+import { PageViewTracker } from "@/lib/page-view";
+
 import styles from "./methodology.module.css";
 
 export const metadata = {
@@ -7,6 +9,7 @@ export const metadata = {
 export default function MethodologyPage() {
   return (
     <main className={styles.page}>
+      <PageViewTracker name="methodology-viewed" />
       <header>
         <p className={styles.eyebrow}>Methodology</p>
         <h1>How the eval scorecard is built</h1>

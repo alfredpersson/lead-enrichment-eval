@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { track } from "@/lib/analytics";
+
 export function SiteNav() {
   const pathname = usePathname() ?? "/";
   const mode = pathname.startsWith("/chat")
@@ -26,6 +28,9 @@ export function SiteNav() {
             mode === "integrated" ? "site-nav__toggle-option--active" : ""
           }`}
           aria-current={mode === "integrated" ? "page" : undefined}
+          onClick={() => {
+            if (mode !== "integrated") track({ name: "mode-switched", props: { to: "integrated" } });
+          }}
         >
           Integrated
         </Link>
@@ -35,12 +40,22 @@ export function SiteNav() {
             mode === "chat" ? "site-nav__toggle-option--active" : ""
           }`}
           aria-current={mode === "chat" ? "page" : undefined}
+          onClick={() => {
+            if (mode !== "chat") track({ name: "mode-switched", props: { to: "chat" } });
+          }}
         >
           Chat
         </Link>
       </div>
       <div className="site-nav__secondary" aria-label="secondary">
-        <Link href="/scorecard">Scorecard</Link>
+        <Link
+          href="/scorecard"
+          onClick={() => {
+            if (mode) track({ name: "scorecard-clicked-from-result", props: { surface: mode } });
+          }}
+        >
+          Scorecard
+        </Link>
         <Link href="/methodology">Methodology</Link>
       </div>
     </nav>

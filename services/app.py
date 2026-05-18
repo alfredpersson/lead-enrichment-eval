@@ -33,6 +33,7 @@ image = (
         "voyageai>=0.3.0",
         "lingua-language-detector>=2.0.0",
         "upstash-redis>=1.2.0",
+        "sentry-sdk[fastapi]>=2.0.0",
     )
     .add_local_python_source("services")
 )

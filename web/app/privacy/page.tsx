@@ -16,7 +16,11 @@ export default function PrivacyPage() {
           Clear them with the delete control on each conversation in the
           chat sidebar, or by clearing your browser data.
         </li>
-        <li>Plausible is used for cookieless analytics.</li>
+        <li>
+          Vercel Analytics records cookieless page views and named
+          interaction events. Vercel hashes visitor identifiers daily; no
+          cross-session tracking, no cookies, no IP storage on our side.
+        </li>
         <li>Sentry may log IP addresses on error.</li>
         <li>Upstash logs IPs for rate limiting.</li>
       </ul>

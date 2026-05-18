@@ -32,6 +32,7 @@ import {
 } from "@/lib/leads";
 import { getExemplar } from "@/lib/exemplars";
 import { parseSseStream } from "@/lib/sse";
+import { track } from "@/lib/analytics";
 import { formatNumber } from "@/lib/utils";
 import { QueueEmpty } from "@/app/_shared/queue-empty";
 import { HistoryMenu } from "./conversation-list";
@@ -235,8 +236,14 @@ export default function ChatPage() {
     [],
   );
 
-  const handleSelectRow = useCallback((id: string) => {
-    setActiveRowId((curr) => (curr === id ? null : id));
+  const handleSelectRow = useCallback((id: string, source: "exemplar" | "paste") => {
+    setActiveRowId((curr) => {
+      if (curr === id) return null;
+      if (source === "exemplar") {
+        track({ name: "example-loaded", props: { surface: "chat", exampleId: id } });
+      }
+      return id;
+    });
   }, []);
 
   const handleStatusChange = useCallback(
@@ -258,6 +265,7 @@ export default function ChatPage() {
       setPasteProfile("");
       setPasteCompany("");
       setStatusFilters((prev) => (prev.has("new") ? prev : new Set([...prev, "new"])));
+      track({ name: "own-input-pasted", props: { surface: "chat" } });
     },
     [persistLeads],
   );
@@ -470,9 +478,11 @@ export default function ChatPage() {
           } else if (event.type === "done") {
             assistantMeta = event.meta;
             terminal = true;
+            track({ name: "completion", props: { surface: "chat" } });
           } else if (event.type === "error") {
             errorEvent = { code: event.code, message: event.message };
             terminal = true;
+            track({ name: "error", props: { surface: "chat", kind: event.code } });
           }
         });
 
@@ -487,6 +497,7 @@ export default function ChatPage() {
             code: "stream_ended",
             message: "Stream ended without a completion event.",
           });
+          track({ name: "error", props: { surface: "chat", kind: "stream_ended" } });
           removeTrailingAssistant(targetId);
           return;
         }
@@ -536,6 +547,7 @@ export default function ChatPage() {
           code: "network",
           message: (err as Error).message ?? "Network error",
         });
+        track({ name: "error", props: { surface: "chat", kind: "network" } });
         removeTrailingAssistant(targetId);
       } finally {
         setSending(false);
@@ -718,7 +730,7 @@ export default function ChatPage() {
                     lead={lead}
                     active={lead.id === activeRowId}
                     selected={selectedIds.has(lead.id)}
-                    onSelect={() => handleSelectRow(lead.id)}
+                    onSelect={() => handleSelectRow(lead.id, lead.source)}
                     onToggleSelected={() => toggleSelected(lead.id)}
                     onStatusChange={(s) => handleStatusChange(lead.id, s)}
                   />

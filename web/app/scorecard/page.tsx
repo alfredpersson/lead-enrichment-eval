@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PageViewTracker } from "@/lib/page-view";
 import {
   fmtMs,
   fmtNumber,
@@ -20,10 +21,16 @@ export const revalidate = 300;
 export default function ScorecardPage() {
   const snapshot = loadSnapshot();
   const annotations = loadAnnotations();
-  if (!snapshot) {
-    return <EmptyState />;
-  }
-  return <Scorecard snapshot={snapshot} annotations={annotations} />;
+  return (
+    <>
+      <PageViewTracker name="scorecard-viewed" />
+      {snapshot ? (
+        <Scorecard snapshot={snapshot} annotations={annotations} />
+      ) : (
+        <EmptyState />
+      )}
+    </>
+  );
 }
 
 function EmptyState() {

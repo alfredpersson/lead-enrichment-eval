@@ -59,6 +59,7 @@ export interface EnrichMeta {
   tokens_in: number;
   tokens_out: number;
   thinking_tokens: number | null;
+  thinking_budget: number;
   cache_hit: boolean;
   model: string;
   eval_neighbours: EvalNeighbour[];

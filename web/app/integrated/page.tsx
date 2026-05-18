@@ -290,7 +290,11 @@ function UnderTheHood({
             <Cell label="Tokens out" value={formatNumber(m.tokens_out)} />
             <Cell
               label="Thinking"
-              value={m.thinking_tokens ? formatNumber(m.thinking_tokens) : "—"}
+              value={
+                m.thinking_tokens
+                  ? `${formatNumber(m.thinking_tokens)} tokens`
+                  : `${formatNumber(m.thinking_budget)} budget`
+              }
             />
             <Cell label="Cache hit" value={m.cache_hit ? "yes" : "no"} />
             <Cell label="Model" value={m.model} />

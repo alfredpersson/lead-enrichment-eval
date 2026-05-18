@@ -1,0 +1,259 @@
+.page {
+  display: grid;
+  gap: 2rem;
+}
+
+.header {
+  display: grid;
+  gap: 0.4rem;
+  max-width: 70ch;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.backLink {
+  color: var(--amber);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--navy);
+}
+
+.kind {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.label {
+  color: var(--muted);
+  margin: 0;
+}
+
+.scenario {
+  color: var(--muted);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.85em;
+  background: rgba(27, 42, 78, 0.06);
+  padding: 0.05em 0.4em;
+  border-radius: 4px;
+}
+
+.section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.section h2 {
+  margin: 0;
+}
+
+.input {
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 30rem;
+  overflow: auto;
+}
+
+.kv {
+  margin: 0;
+  display: grid;
+  gap: 0.25rem;
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.8rem 1rem;
+}
+
+.kvRow {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.25rem 0;
+  border-bottom: 1px dashed var(--border-soft);
+}
+
+.kvRow:last-child {
+  border-bottom: none;
+}
+
+.kvRow dt {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.kvRow dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.kvNotes {
+  padding: 0.4rem 0 0;
+  border-top: 1px dashed var(--border-soft);
+}
+
+.kvNotes dt {
+  margin: 0 0 0.2rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.kvNotes dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.criteria {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.predGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .predGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.predColumn {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  background: var(--cream-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.predColumn h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.passBadge,
+.failBadge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15em 0.5em;
+  border-radius: 999px;
+}
+
+.passBadge {
+  background: rgba(47, 122, 61, 0.12);
+  color: #2f7a3d;
+}
+
+.failBadge {
+  background: rgba(192, 67, 67, 0.12);
+  color: var(--danger);
+}
+
+.failures {
+  list-style: disc;
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+  color: var(--danger);
+  display: grid;
+  gap: 0.2rem;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.claims,
+.hook,
+.reasoning {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  background: rgba(27, 42, 78, 0.03);
+}
+
+.claims summary,
+.hook summary,
+.reasoning summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.claims summary:hover,
+.hook summary:hover,
+.reasoning summary:hover {
+  color: var(--navy);
+}
+
+.claims ol {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+}
+
+.claims li > div:first-child {
+  margin-bottom: 0.15rem;
+}
+
+.quote {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.quoteOk {
+  color: #2f7a3d;
+  font-weight: 600;
+}
+
+.quoteBad {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.hook p,
+.reasoning p {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   fmtMs,
   fmtNumber,
@@ -464,9 +466,14 @@ function FailureColumn({
       <ul className={styles.failures}>
         {modes.map((m) => (
           <li key={m.item_id}>
-            <code className={styles.code}>
-              {m.item_id} · {m.kind}
-            </code>
+            <Link
+              href={`/eval/item/${m.item_id}`}
+              className={styles.failureLink}
+            >
+              <code className={styles.code}>
+                {m.item_id} · {m.kind}
+              </code>
+            </Link>
             <ul>
               {m.reasons.map((r, i) => (
                 <li key={i}>{r}</li>

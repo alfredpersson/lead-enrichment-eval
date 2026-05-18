@@ -78,6 +78,7 @@ export interface ModeBlock {
   grounding: GroundingResults;
   hooks: HookResults;
   per_item: PerItemScore[];
+  raw_outputs?: Record<string, PredictedOutput>;
   inference_meta: Array<{
     item_id: string;
     success: boolean;
@@ -176,6 +177,63 @@ export interface AnnotationsFile {
   annotations: Annotation[];
 }
 
+export interface EvalItemGold {
+  input_lang?: string;
+  structured_fields?: Record<string, unknown>;
+  classification?: {
+    industry?: string;
+    segment?: string;
+    seniority?: string;
+    company_size?: string;
+  };
+  fit_score?: {
+    value: number;
+    dimensions?: Record<string, number>;
+  };
+  expected_action?: string;
+  claims_allowed?: unknown;
+  notes?: string;
+  adversarial_pass_criteria?: string[];
+}
+
+export interface EvalTestItem {
+  id: string;
+  kind: string;
+  scenario?: string;
+  label?: string;
+  profile: string;
+  company?: string | null;
+  gold: EvalItemGold;
+}
+
+export interface ItemsFile {
+  version: string;
+  items: EvalTestItem[];
+}
+
+export interface PredictedClaim {
+  text: string;
+  source_quote: string;
+  confidence?: number;
+}
+
+export interface PredictedOutput {
+  classification?: {
+    industry?: string;
+    segment?: string;
+    seniority?: string;
+    company_size?: string;
+  };
+  fit_score?: {
+    value: number;
+    dimensions?: Record<string, number>;
+  };
+  claims?: PredictedClaim[];
+  draft_hook?: { text?: string; rationale?: string };
+  action?: string;
+  reasoning?: string;
+}
+
 // Files are mirrored from data/eval_runs/ into web/public/eval/ by the npm
 // predev/prebuild hooks (see web/scripts/sync-eval-snapshot.mjs). Reading
 // from public/ keeps the loader inside the Next.js project root so Vercel
@@ -192,6 +250,22 @@ export function loadSnapshot(): Snapshot | null {
     if ((e as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw e;
   }
+}
+
+export function loadTestItems(): EvalTestItem[] {
+  const p = path.join(EVAL_DIR, "items.json");
+  try {
+    const raw = fs.readFileSync(p, "utf8");
+    const file = JSON.parse(raw) as ItemsFile;
+    return file.items ?? [];
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw e;
+  }
+}
+
+export function loadTestItem(id: string): EvalTestItem | null {
+  return loadTestItems().find((it) => it.id === id) ?? null;
 }
 
 export function loadAnnotations(): Annotation[] {

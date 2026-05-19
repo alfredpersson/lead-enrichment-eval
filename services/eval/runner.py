@@ -10,9 +10,11 @@ Run locally:
     APP_ENV=local ANTHROPIC_API_KEY=... \
         python -m services.eval.runner --tag manual
 
-CI runs this nightly via .github/workflows/eval.yml. `--robustness quick`
-samples 10 items for smoke runs; `--robustness none` skips the perturbation
-pass entirely.
+CI runs this on demand via .github/workflows/eval.yml (`workflow_dispatch`).
+The nightly cron was dropped — the v1.0 test set is static, so a scheduled
+run mostly re-spends API credits on an identical experiment.
+`--robustness quick` samples 10 items for smoke runs; `--robustness none`
+skips the perturbation pass entirely.
 """
 
 from __future__ import annotations

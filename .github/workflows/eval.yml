@@ -59,7 +59,7 @@ jobs:
             echo "No snapshot changes to commit."
             exit 0
           fi
-          git commit -m "Nightly eval snapshot $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git commit -m "Eval snapshot $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           # Pull-with-rebase to avoid races against concurrent main pushes.
           git pull --rebase origin main
           git push origin HEAD:main

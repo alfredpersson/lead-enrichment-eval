@@ -14,8 +14,9 @@ import {
 
 import styles from "./scorecard.module.css";
 
-// Snapshot updates nightly. 5-minute ISR keeps Vercel function invocations
-// rare without making a stale snapshot visible for long.
+// Snapshot refreshes on demand via workflow_dispatch. 5-minute ISR keeps
+// Vercel function invocations rare without making a stale snapshot visible
+// for long after a manual rerun lands.
 export const revalidate = 300;
 
 export default function ScorecardPage() {
@@ -38,8 +39,9 @@ function EmptyState() {
     <main>
       <h1>Eval scorecard</h1>
       <p style={{ color: "var(--muted)", maxWidth: "60ch" }}>
-        No eval snapshot has been committed yet. The nightly cron writes
-        `data/eval_runs/latest.json` at 02:00 UTC. Until the first run lands,
+        No eval snapshot has been committed yet. Trigger a run via
+        `.github/workflows/eval.yml` (workflow_dispatch); it writes
+        `data/eval_runs/latest.json` on completion. Until the first run lands,
         the methodology page describes what will appear here.
       </p>
     </main>

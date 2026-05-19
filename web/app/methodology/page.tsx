@@ -319,7 +319,7 @@ export default function MethodologyPage() {
           <dd>
             The plan specified Claude Opus 4.7 as the Anthropic-side
             grounding judge. Swapped to Claude Sonnet 4.6 during the
-            cost-reduction pass: at the volume the nightly eval runs
+            cost-reduction pass: at the volume each eval run covers
             (73 items × claims-per-item × 2 modes), Opus pricing was
             the largest non-inference line item without a measurable
             quality lift over Sonnet on this judging task. Cohen&apos;s

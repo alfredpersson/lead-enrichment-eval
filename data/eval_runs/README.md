@@ -12,9 +12,9 @@ stay in git so prospects can browse the timeline.
 data/eval_runs/
   latest.json                       # always the most recent snapshot
   annotations.json                  # dated incidents (eval-and-fix loop)
-  20260512T020000Z.json             # historical (nightly cron, 02:00 UTC)
-  20260512T020000Z-prefix.json      # tagged manual run (pre-fix)
-  20260513T020000Z-postfix.json     # tagged manual run (post-fix)
+  20260513T144616Z.json             # historical workflow_dispatch run
+  20260513T144616Z-prefix.json      # tagged manual run (pre-fix)
+  20260513T174653Z-postfix.json     # tagged manual run (post-fix)
   README.md                         # this file
 ```
 
@@ -72,9 +72,11 @@ measured values from the first committed snapshot.
   OpenAI flagship).
 - Hook coherence judge: per item across both modes (GPT-5-mini class).
 
-The CI cron schedules at 02:00 UTC. No automatic budget cap is wired today;
-the daily-limit tripwire on the plan is enforced live (the demo site
-disables Run/Send buttons), not on the eval harness.
+Eval runs are triggered on demand via `workflow_dispatch`; the nightly cron
+was dropped because the v1.0 test set is static and re-running it on a
+schedule mostly burns API credits on an identical experiment. No automatic
+budget cap is wired today; the daily-limit tripwire on the plan is enforced
+live (the demo site disables Run/Send buttons), not on the eval harness.
 
 ## What's still owed for Phase 4
 
@@ -112,8 +114,9 @@ Pinned here so it survives context resets. Cross off as completed.
 
 Phase 4 deliverables already satisfied: live runner, both modes scored on
 the full 73-item test set, deterministic metrics, methodology page,
-nightly cron in `.github/workflows/eval.yml`, robustness pass populated
-for all three variants, eval-and-fix loop executed with pre/post
+`workflow_dispatch` job in `.github/workflows/eval.yml` (the nightly cron
+was intentionally dropped — see the cost note above), robustness pass
+populated for all three variants, eval-and-fix loop executed with pre/post
 snapshots and an annotation entry, JSON snapshots committed
 (`20260513T144616Z-prefix.json` and `20260513T174653Z-postfix.json` plus
 the `latest.json` mirror).

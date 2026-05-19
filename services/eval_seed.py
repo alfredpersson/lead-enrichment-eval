@@ -2,7 +2,7 @@
 Seed `eval_set` from `data/exemplars.json` and precompute Voyage-3 embeddings.
 
 Run locally (or as a one-off Modal function) after applying migrations and
-before the first nightly eval cron. Idempotent: rows are upserted by id.
+before the first eval run. Idempotent: rows are upserted by id.
 
 Test-set schema (extended for Phase 0b):
 

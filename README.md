@@ -2,6 +2,8 @@
 
 A B2B lead enrichment AI feature, built two ways as two realistic products. Same model (Claude Sonnet 4.6), same UI polish, same lead-queue product shape. The integrated build runs a strict tool schema, extended thinking, structured outputs, and a claim-grounding rule. The chat build runs the same model with a task-describing system prompt — no tools, no schema, no thinking, no grounding rule. This is a bundle-vs-bundle comparison: the realistic product question, not a contract-controlled A/B. Both run against the same eval set so the architectural difference is measurable, and neither side is a strawman.
 
+Live demo: <https://demo.alfredpersson.com>. Methodology, scorecard, and `/integrated` vs `/chat` are linked from there.
+
 ## Thesis
 
 A claim-grounded structured-output surface beats a free-form chat surface on extraction completeness, action accuracy, claim grounding, and adversarial robustness — at the cost of more upfront design and a tighter eval loop. This repo demonstrates that delta and exposes the eval scorecard.
@@ -10,7 +12,7 @@ A claim-grounded structured-output surface beats a free-form chat surface on ext
 
 - **Frontend (`web/`):** Next.js 15 App Router on Vercel. Routes: `/`, `/integrated`, `/chat`, `/scorecard`, `/methodology`, `/privacy`. API routes proxy to Modal.
 - **Backend (`services/`):** Python on Modal, FastAPI app (`services/app.py`) exposing `/enrich`, `/chat` (SSE), `/neighbours`, `/healthz`. Anthropic SDK with prompt caching on both system prompts. The integrated build calls Sonnet 4.6 with extended thinking and the `enrich_lead` tool (strict JSON schema). The chat build streams free-form Sonnet 4.6 with no tools.
-- **Database:** Postgres on Neon with `pgvector`. Schema in `migrations/0001_init.sql` — `requests` (telemetry, no input text written), `eval_set` (test items + Voyage-3 embeddings), `eval_runs` (nightly results).
+- **Database:** Postgres on Neon with `pgvector`. Schema in `migrations/0001_init.sql` — `requests` (telemetry, no input text written), `eval_set` (test items + Voyage-3 embeddings), `eval_runs` (snapshot of the most recent on-demand eval run).
 - **Embeddings:** Voyage-3 for the eval-neighbour panel.
 - **Rate limiting:** Upstash Redis sliding-window per IP.
 

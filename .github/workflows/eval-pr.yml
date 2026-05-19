@@ -3,8 +3,9 @@ name: PR anchor gate
 # Cheap regression check for the 10-item anchor set. Runs on PRs that
 # touch the prompt, mode behavior, scoring, eval logic, or the anchor
 # files themselves. Hard-fails on any per-item regression against
-# data/eval_runs/anchor_baseline.json. The full 73-item snapshot stays
-# on the nightly cron (eval.yml); this gate is the fast feedback loop.
+# data/eval_runs/anchor_baseline.json. The full 73-item snapshot is
+# refreshed on demand via eval.yml workflow_dispatch; this gate is the
+# fast feedback loop for every PR.
 
 on:
   pull_request:

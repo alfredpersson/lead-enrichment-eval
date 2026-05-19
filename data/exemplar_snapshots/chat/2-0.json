@@ -1,0 +1,16 @@
+{
+  "exemplar_id": "2",
+  "scenario": "ambiguous_fit",
+  "starter_index": 0,
+  "user_message": "Qualify against the ICP",
+  "generated_at": "2026-05-19T08:48:18.788558+00:00",
+  "model": "claude-sonnet-4-6",
+  "system_prompt_sha256": "e5448b6dcf4e2282d61be03fa70a10034d905e6f1397c53878629dc9bce97612",
+  "assistant_text": "## Jamal Reeves / Moodboard \u2014 ICP Qualification\n\n### Signal-by-Signal Breakdown\n\n| Criterion | ICP Requirement | Moodboard Signal | Fit? |\n|---|---|---|---|\n| **Stage** | Series A\u2013C | Series A (Index Ventures, 2024) | \u2705 |\n| **Headcount** | 20\u2013250 | ~25 | \u2705 |\n| **ARR** | $2M\u2013$50M | Not disclosed | \u26a0\ufe0f |\n| **Product shape** | B2B SaaS, AI feature live or in dev | B2B API product + AI features in active development | \u2705 |\n| **Target role** | VP Product, Head of AI/ML, Dir. Eng., Founder/CTO (technical) | Founder & CEO \u2014 unclear if technical background | \u26a0\ufe0f |\n\n---\n\n### Key Observations\n\n**Strengths:**\n- Stage and headcount are a clean match\n- The B2B API product is a genuine SaaS motion, not just a consumer play\n- AI features are explicitly in active development \u2014 that's a strong product-shape signal\n- Index Ventures backing adds credibility and suggests real funding\n\n**Risks / Gaps:**\n- **ARR is unknown.** With 1.2M MAUs on the consumer side and an early-stage B2B API, ARR could plausibly be sub-$2M. Worth trying to triangulate before investing heavily in outreach.\n- **Dual B2C/B2B model** is a yellow flag \u2014 the B2B side is growing but may not be the primary motion yet. Depending on what you're selling, you'd want the API/B2B side to be substantial enough to matter.\n- **Jamal's background** isn't explicitly technical. As CEO he may not be the right day-to-day contact; a technical co-founder or Head of Engineering (if one exists) might be a better direct target.\n\n---\n\n### Overall Score: **Soft Qualify**\n\nStrong structural fit on stage, size, and AI activity. The ARR uncertainty and mixed B2C/B2B identity mean this is a **medium-confidence lead** \u2014 worth reaching out, but worth doing light research first to confirm the B2B API business has meaningful traction.",
+  "usage": {
+    "input_tokens": 406,
+    "output_tokens": 539,
+    "latency_ms": 11937,
+    "cache_hit": false
+  }
+}

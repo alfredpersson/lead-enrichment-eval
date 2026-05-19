@@ -24,6 +24,7 @@ from anthropic import AsyncAnthropic
 from services.config import is_local
 from services.embeddings import embed, find_neighbours
 from services.prompts import ENRICH_LEAD_TOOL, integrated_system_blocks
+from services.snapshots import load_integrated_snapshot
 from services.telemetry import write_request_row
 from services.validation import check_input
 
@@ -71,14 +72,23 @@ async def enrich_lead(
     company: str | None = None,
     *,
     example_id: str | None = None,
+    bypass_cache: bool = False,
 ) -> dict[str, Any]:
     """
     Run the integrated build end-to-end and return a serialisable dict matching
     the EnrichOutput shape from the plan, with `meta` populated.
     """
     input_lang = check_input(profile, company)
-    request_id = str(uuid.uuid4())
     input_text = profile if not company else f"{profile}\n\n{company}"
+
+    if example_id and not bypass_cache:
+        snap = load_integrated_snapshot(example_id)
+        if snap is not None:
+            return await _replay_integrated_snapshot(
+                snap, input_text, input_lang, example_id
+            )
+
+    request_id = str(uuid.uuid4())
     started = time.perf_counter()
 
     client = _get_client()
@@ -152,6 +162,7 @@ async def enrich_lead_stream(
     company: str | None = None,
     *,
     example_id: str | None = None,
+    bypass_cache: bool = False,
 ) -> AsyncIterator[dict[str, Any]]:
     """
     Stream the integrated build. Yields:
@@ -160,8 +171,18 @@ async def enrich_lead_stream(
     Validation and Anthropic errors propagate; the FastAPI layer maps them.
     """
     input_lang = check_input(profile, company)
-    request_id = str(uuid.uuid4())
     input_text = profile if not company else f"{profile}\n\n{company}"
+
+    if example_id and not bypass_cache:
+        snap = load_integrated_snapshot(example_id)
+        if snap is not None:
+            async for event in _stream_integrated_snapshot(
+                snap, input_text, input_lang, example_id
+            ):
+                yield event
+            return
+
+    request_id = str(uuid.uuid4())
     started = time.perf_counter()
 
     client = _get_client()
@@ -245,4 +266,66 @@ async def enrich_lead_stream(
         "model": MODEL_ID,
         "eval_neighbours": neighbours,
     }
+    yield {"type": "result", "output": output}
+
+
+async def _replay_integrated_snapshot(
+    snap: dict[str, Any],
+    input_text: str,
+    input_lang: str,
+    example_id: str,
+) -> dict[str, Any]:
+    request_id = str(uuid.uuid4())
+    output: dict = dict(snap["output"])
+    usage = snap["usage"]
+    neighbours = await find_neighbours(input_text, k=3)
+    claims = output.get("claims", [])
+
+    await write_request_row(
+        {
+            "request_id": request_id,
+            "mode": "integrated",
+            "example_id": example_id,
+            "input_lang": input_lang,
+            "input_char_count": len(input_text),
+            "model_id": snap["model"],
+            "thinking_enabled": True,
+            "input_tokens": usage["input_tokens"],
+            "output_tokens": usage["output_tokens"],
+            "thinking_tokens": usage["thinking_tokens"],
+            "cache_hit": False,
+            "latency_ms": usage["latency_ms"],
+            "embedding": None,
+            "snapshot_served": True,
+            "action": output.get("action"),
+            "fit_score": output.get("fit_score", {}).get("value"),
+            "claim_count": len(claims),
+            "claims_with_source_quote_count": _grounded_count(claims, input_text),
+        }
+    )
+
+    output["meta"] = {
+        "request_id": request_id,
+        "latency_ms": usage["latency_ms"],
+        "tokens_in": usage["input_tokens"],
+        "tokens_out": usage["output_tokens"],
+        "thinking_tokens": usage["thinking_tokens"],
+        "thinking_budget": THINKING_BUDGET_TOKENS,
+        "cache_hit": False,
+        "model": snap["model"],
+        "eval_neighbours": neighbours,
+        "snapshot_served": True,
+    }
+    return output
+
+
+async def _stream_integrated_snapshot(
+    snap: dict[str, Any],
+    input_text: str,
+    input_lang: str,
+    example_id: str,
+) -> AsyncIterator[dict[str, Any]]:
+    if snap["thinking_trace"]:
+        yield {"type": "thinking", "delta": snap["thinking_trace"]}
+    output = await _replay_integrated_snapshot(snap, input_text, input_lang, example_id)
     yield {"type": "result", "output": output}

@@ -92,6 +92,7 @@ interface ErrorState {
 
 interface SendOptions {
   replaceFrom?: number;
+  bypassCache?: boolean;
 }
 
 export default function ChatPage() {
@@ -447,6 +448,7 @@ export default function ChatPage() {
               profile: row.profile,
               company: row.company,
             },
+            bypass_cache: opts.bypassCache === true,
           }),
           signal: controller.signal,
         });
@@ -788,21 +790,34 @@ export default function ChatPage() {
               )
             ) : (
               <div className={styles.messages}>
-                {messages.map((m, i) => (
-                  <MessageBubble
-                    key={i}
-                    message={m}
-                    showMetrics={showMetrics}
-                    editing={editingIndex === i}
-                    editingDraft={editingIndex === i ? editingDraft : ""}
-                    onEditDraftChange={setEditingDraft}
-                    onStartEdit={() => handleStartEdit(i)}
-                    onSaveEdit={handleSaveEdit}
-                    onCancelEdit={handleCancelEdit}
-                    isStreaming={i === streamingIndex}
-                    onStop={i === streamingIndex ? handleStop : undefined}
-                  />
-                ))}
+                {messages.map((m, i) => {
+                  const canRerunLive =
+                    i === 1 && m.meta?.snapshot_served === true && !sending;
+                  return (
+                    <MessageBubble
+                      key={i}
+                      message={m}
+                      showMetrics={showMetrics}
+                      editing={editingIndex === i}
+                      editingDraft={editingIndex === i ? editingDraft : ""}
+                      onEditDraftChange={setEditingDraft}
+                      onStartEdit={() => handleStartEdit(i)}
+                      onSaveEdit={handleSaveEdit}
+                      onCancelEdit={handleCancelEdit}
+                      isStreaming={i === streamingIndex}
+                      onStop={i === streamingIndex ? handleStop : undefined}
+                      onRerunLive={
+                        canRerunLive
+                          ? () =>
+                              void send(messages[0].content, {
+                                bypassCache: true,
+                                replaceFrom: 0,
+                              })
+                          : undefined
+                      }
+                    />
+                  );
+                })}
               </div>
             )}
           </section>

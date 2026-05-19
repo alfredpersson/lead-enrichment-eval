@@ -1,0 +1,78 @@
+{
+  "exemplar_id": "2",
+  "scenario": "ambiguous_fit",
+  "generated_at": "2026-05-19T08:48:06.849360+00:00",
+  "model": "claude-sonnet-4-6",
+  "system_prompt_sha256": "5104f9f95d5f07ab064510b40c5a0e4eb8784a7caf2a857e460fa9bb7ee0bad0",
+  "tool_schema_sha256": "6f68418b98c97c30e07a2fb89cf36d7b3acfb03d400419fb2cd63570be724985",
+  "output": {
+    "classification": {
+      "industry": "Consumer / B2B SaaS hybrid",
+      "segment": "Group planning platform (consumer app + B2B API)",
+      "seniority": "Founder",
+      "company_size": "11-50"
+    },
+    "fit_score": {
+      "value": 0.62,
+      "dimensions": {
+        "stage_match": 1.0,
+        "headcount_match": 1.0,
+        "arr_match": 0.2,
+        "product_shape_match": 0.65,
+        "role_match": 0.75
+      }
+    },
+    "claims": [
+      {
+        "text": "Moodboard closed a Series A led by Index Ventures in 2024.",
+        "source_quote": "Series A led by Index Ventures (2024)",
+        "confidence": 1.0
+      },
+      {
+        "text": "The company has approximately 25 employees.",
+        "source_quote": "~25 employees in London",
+        "confidence": 0.95
+      },
+      {
+        "text": "Moodboard is actively working on AI features for both its consumer and B2B products.",
+        "source_quote": "Working on AI features for both sides of the product",
+        "confidence": 0.95
+      },
+      {
+        "text": "The company sells group-planning APIs to corporate event teams as its B2B offering.",
+        "source_quote": "growing our B2B side selling our group-planning APIs to corporate event teams",
+        "confidence": 1.0
+      },
+      {
+        "text": "The consumer side of the product has 1.2 million monthly active users.",
+        "source_quote": "1.2M MAUs",
+        "confidence": 1.0
+      },
+      {
+        "text": "Jamal Reeves is the Founder of Moodboard.",
+        "source_quote": "Founder of Moodboard",
+        "confidence": 1.0
+      }
+    ],
+    "draft_hook": {
+      "text": "Hi Jamal \u2014 noticed Moodboard is building AI features across both the consumer and B2B sides of the product post-Series A, while keeping a ~25-person team lean. We work with founders at exactly this stage who are trying to ship production AI without bloating headcount. Worth a quick chat on what's working?",
+      "claims_used": [
+        "Moodboard is actively working on AI features for both its consumer and B2B products.",
+        "Moodboard closed a Series A led by Index Ventures in 2024.",
+        "The company has approximately 25 employees.",
+        "Jamal Reeves is the Founder of Moodboard."
+      ],
+      "confidence": 0.82
+    },
+    "action": "propose",
+    "reasoning": "Stage and headcount are strong ICP matches: Moodboard is Series A (squarely in target range) with ~25 employees (within 20\u2013250). The Founder role satisfies the target-role criterion, though no technical background is stated, which trims the role_match slightly. Product shape is a partial fit: the B2B API offering for corporate event teams is B2B SaaS-adjacent and AI features are explicitly in active development (\"Working on AI features for both sides of the product\"), but Moodboard is a consumer/B2B hybrid \u2014 the consumer side (1.2M MAUs) is sizeable and outside the ICP's pure B2B SaaS definition. ARR is entirely absent from the input, so arr_match is scored near zero by default; a Series A at 25 people could plausibly be sub-$2M ARR, which would be below the ICP floor. Because all claims are fully grounded with verbatim quotes and the holistic fit score sits at 0.62 (within the [0.50, 0.80] propose band), the action is `propose` pending ARR verification and confirmation of how dominant the B2B revenue stream is relative to consumer."
+  },
+  "thinking_trace": "Let me analyze this lead carefully against the ICP.\n\n**Classification:**\n- Industry: Consumer / B2B SaaS hybrid (they have both consumer and B2B sides)\n- Segment: Group planning platform (consumer + B2B API)\n- Seniority: Founder (Jamal Reeves is Founder & CEO)\n- Company size: 11-50 (25 people)\n\n**ICP Scoring:**\n\n1. **Stage match**: Series A \u2705 - \"Series A from Index Ventures\" / \"Series A led by Index Ventures (2024)\" - fits perfectly (Series A, B, C). Score: 1.0\n\n\n2. **Headcount match**: ~25 people \u2705 - fits within 20-250 range. Score: 1.0\n3. **ARR match**: No ARR data provided. We have 1.2M MAUs (consumer), but no ARR figure. The B2B side is \"growing\" but no numbers given. This is a signal problem. Score: 0.3 (insufficient data, but given Series A and 25 employees, could be in range - unclear)\n4. **Product shape match**: \"Consumer / B2B SaaS hybrid\" - ICP wants B2B SaaS shipping at least one AI feature. They're a consumer-first platform with B2B APIs, so I need to check if they've actually shipped AI capabilities on the B2B side.\n5. **Role match**: Founder & CEO. The ICP targets \"Founder or CTO with a technical background.\" Jamal is a Founder but we don't have clear signal on technical background. The profile doesn't explicitly state technical background. Score: 0.6 (Founder matches the role criterion, but no technical background signal)\n\nNow I'm grounding the claims I can verify: Series A from Index Ventures in 2024, approximately 25 employees in London, and they're actively working on AI features across both consumer and B2B sides of the product.\n\nThe B2B API side is growing with corporate event teams using their group-planning APIs, and on the consumer side they're hitting 1.2M monthly active users. Jamal's the founder here.\n\nThe major gap is ARR data\u2014there's nothing to work with there, so that dimension scores low. Looking at the overall fit: Stage is perfect at 1.0 for Series A, headcount matches at 1.0 with 25 people, but ARR gets 0.2 since there's no information available. The product shape is around 0.65 because while they have a B2B API component that fits, the hybrid consumer/B2B model with AI features isn't purely B2B SaaS.\n\nThe founder role is a good match at 0.75, though there's no clear technical background signal. Weighing everything together\u2014strong stage and headcount alignment, active AI development, but offset by the hybrid business model and missing ARR data\u2014I'm landing on a holistic fit score of 0.62.\n\nSince the fit falls in the 0.50-0.80 range and all my claims are backed by direct quotes, the action is to propose. For the outreach hook, I'll stick to grounded claims: the Series A funding, ~25-person team, AI features in development, and B2B API offering. The message frames this around their stage and what we're seeing work for similar teams shipping their first production AI features.",
+  "usage": {
+    "input_tokens": 497,
+    "output_tokens": 2043,
+    "thinking_tokens": null,
+    "latency_ms": 32111,
+    "cache_hit": true
+  }
+}

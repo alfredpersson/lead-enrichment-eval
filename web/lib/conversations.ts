@@ -14,6 +14,7 @@ export interface ChatMeta {
   model: string;
   turn_count: number;
   eval_neighbours?: EvalNeighbour[];
+  snapshot_served?: boolean;
 }
 
 export interface LeadContextRef {

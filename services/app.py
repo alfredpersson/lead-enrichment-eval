@@ -36,6 +36,10 @@ image = (
         "sentry-sdk[fastapi]>=2.0.0",
     )
     .add_local_python_source("services")
+    .add_local_dir(
+        "data/exemplar_snapshots",
+        remote_path="/root/data/exemplar_snapshots",
+    )
 )
 
 secrets = [modal.Secret.from_name("lead-enrichment")]

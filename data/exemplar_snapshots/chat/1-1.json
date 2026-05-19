@@ -1,0 +1,16 @@
+{
+  "exemplar_id": "1",
+  "scenario": "strong_fit",
+  "starter_index": 1,
+  "user_message": "Draft an outreach hook",
+  "generated_at": "2026-05-19T08:47:25.043651+00:00",
+  "model": "claude-sonnet-4-6",
+  "system_prompt_sha256": "e5448b6dcf4e2282d61be03fa70a10034d905e6f1397c53878629dc9bce97612",
+  "assistant_text": "Here's a concise outreach hook for Maya:\n\n---\n\n**Subject:** AI feature adoption at Lattice Forge\n\nHi Maya,\n\nCongrats on shipping call summarization GA \u2014 going from first AI feature to a pipeline of the next two is exactly the inflection point where the \"will users actually change their behavior?\" question gets real.\n\nI'd love to share how other VP Products at Series B sales-tech companies have been thinking about measuring AI feature adoption and driving workflow change \u2014 and hear what's working (or not) for your team at Lattice Forge.\n\nWorth a 20-minute chat?\n\n---\n\n**Why this works for Maya specifically:**\n\n- **Hooks on something she just did** (GA launch) rather than a generic AI pitch\n- **Speaks to her stated interest** \u2014 she literally says she likes talking to teams thinking about AI feature adoption\n- **Peer framing** (other Series B VP Products) adds credibility without namedropping awkwardly\n- **Gong background** means she's seen mature AI product thinking \u2014 don't over-explain basics\n\n**One tweak to consider:** If you have a specific stat or customer story relevant to sales execution tools, drop it in place of the \"other VP Products\" line for more punch.",
+  "usage": {
+    "input_tokens": 419,
+    "output_tokens": 278,
+    "latency_ms": 7865,
+    "cache_hit": false
+  }
+}

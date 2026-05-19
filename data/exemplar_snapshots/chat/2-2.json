@@ -1,0 +1,16 @@
+{
+  "exemplar_id": "2",
+  "scenario": "ambiguous_fit",
+  "starter_index": 2,
+  "user_message": "Draft a hook that handles the ambiguity",
+  "generated_at": "2026-05-19T08:48:41.192051+00:00",
+  "model": "claude-sonnet-4-6",
+  "system_prompt_sha256": "e5448b6dcf4e2282d61be03fa70a10034d905e6f1397c53878629dc9bce97612",
+  "assistant_text": "## The Core Ambiguity to Handle\n\nMoodboard is a **hybrid** \u2014 part consumer app, part B2B API business. The ICP requires B2B SaaS, so the hook needs to acknowledge the B2B side is real and growing *without* pretending the consumer side doesn't exist. It also shouldn't feel like you've done lazy research.\n\n---\n\n## Draft Hook\n\n> **Subject: the B2B side of Moodboard**\n>\n> Jamal \u2014 saw you've been building out the group-planning APIs for corporate event teams alongside the consumer product. That split architecture is interesting: shipping AI features across two very different user contexts (friend groups vs. enterprise buyers) usually means the product and eng teams are making some fast calls about where AI investment actually pays off first.\n>\n> We work with B2B SaaS teams at your stage to [one-line value prop]. Happy to share what we're seeing from similar companies navigating that consumer-to-B2B transition if useful.\n>\n> Worth 20 minutes?\n\n---\n\n## Why This Works\n\n- **Leads with the B2B angle** \u2014 frames the conversation around the ICP-qualifying part of the business without dismissing the consumer side\n- **References the AI complexity honestly** \u2014 two audiences, two use cases, real prioritisation tension. Shows you read the profile properly\n- **Doesn't overclaim** \u2014 \"growing B2B side\" is their own language; using it back signals you're not assuming they're a pure-play SaaS company yet\n- **Leaves room** \u2014 the ask is soft enough that if the B2B ARR is still early, it doesn't feel presumptuous\n\n---\n\nWant me to sharpen the value prop line once you drop in what you're actually selling?",
+  "usage": {
+    "input_tokens": 409,
+    "output_tokens": 399,
+    "latency_ms": 11250,
+    "cache_hit": false
+  }
+}

@@ -63,6 +63,7 @@ export interface EnrichMeta {
   cache_hit: boolean;
   model: string;
   eval_neighbours: EvalNeighbour[];
+  snapshot_served?: boolean;
 }
 
 export interface EnrichOutput {

@@ -23,6 +23,7 @@ interface Props {
   onCancelEdit: () => void;
   isStreaming: boolean;
   onStop?: () => void;
+  onRerunLive?: () => void;
 }
 
 export function MessageBubble({
@@ -36,6 +37,7 @@ export function MessageBubble({
   onCancelEdit,
   isStreaming,
   onStop,
+  onRerunLive,
 }: Props) {
   const isUser = message.role === "user";
   const finalAssistant = !isUser && (message.meta || message.stopped);
@@ -183,6 +185,24 @@ export function MessageBubble({
               onClick={handleCopy}
             >
               {copied ? "Copied" : "Copy"}
+            </button>
+          )}
+          {finalAssistant && message.meta?.snapshot_served && (
+            <span
+              className={styles.snapshotBadge}
+              title="Cached starter response served from a committed snapshot."
+            >
+              Cached starter
+            </span>
+          )}
+          {onRerunLive && (
+            <button
+              type="button"
+              className={styles.bubbleAction}
+              onClick={onRerunLive}
+              title="Bypass the cached snapshot and run this starter against the live API."
+            >
+              Re-run live
             </button>
           )}
           {!isUser && isStreaming && onStop && (

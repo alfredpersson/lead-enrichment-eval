@@ -263,26 +263,41 @@ function HookView({ hook }: { hook: EnrichOutput["draft_hook"] }) {
 function UnderTheHood({
   row,
   onToggle,
+  onRerunLive,
 }: {
   row: Row;
   onToggle: () => void;
+  onRerunLive: () => void;
 }) {
   const result = row.result;
   if (!result) return null;
   const m = result.meta;
   return (
     <div className={styles.underHood}>
-      <button
-        type="button"
-        className={styles.underHoodToggle}
-        onClick={onToggle}
-        aria-expanded={row.underTheHood}
-      >
-        <span className={styles.underHoodCaret}>
-          {row.underTheHood ? "▾" : "▸"}
-        </span>
-        Under the hood
-      </button>
+      <div className={styles.underHoodHeader}>
+        <button
+          type="button"
+          className={styles.underHoodToggle}
+          onClick={onToggle}
+          aria-expanded={row.underTheHood}
+        >
+          <span className={styles.underHoodCaret}>
+            {row.underTheHood ? "▾" : "▸"}
+          </span>
+          Under the hood
+        </button>
+        {m.snapshot_served && (
+          <button
+            type="button"
+            className={styles.rerunLive}
+            onClick={onRerunLive}
+            disabled={row.status === "streaming"}
+            title="Bypass the cached snapshot and run this exemplar against the live Anthropic API."
+          >
+            Re-run live
+          </button>
+        )}
+      </div>
       {row.underTheHood && (
         <div className={styles.underHoodBody}>
           <div className={styles.telemetryGrid}>
@@ -483,10 +498,12 @@ function SidepanelBody({
   row,
   onHover,
   onToggleUnderHood,
+  onRerunLive,
 }: {
   row: Row;
   onHover: (q: string | null) => void;
   onToggleUnderHood: () => void;
+  onRerunLive: () => void;
 }) {
   if (row.error) {
     return (
@@ -543,7 +560,11 @@ function SidepanelBody({
         onHover={onHover}
       />
       <HookView hook={result.draft_hook} />
-      <UnderTheHood row={row} onToggle={onToggleUnderHood} />
+      <UnderTheHood
+        row={row}
+        onToggle={onToggleUnderHood}
+        onRerunLive={onRerunLive}
+      />
     </>
   );
 }
@@ -554,12 +575,14 @@ function Sidepanel({
   onAct,
   onHover,
   onToggleUnderHood,
+  onRerunLive,
 }: {
   row: Row | null;
   onClose: () => void;
   onAct: () => void;
   onHover: (q: string | null) => void;
   onToggleUnderHood: () => void;
+  onRerunLive: () => void;
 }) {
   const open = row !== null;
   const result = row?.result ?? null;
@@ -595,6 +618,7 @@ function Sidepanel({
               row={row}
               onHover={onHover}
               onToggleUnderHood={onToggleUnderHood}
+              onRerunLive={onRerunLive}
             />
           </div>
           {result && !row.error && (
@@ -687,6 +711,14 @@ function QueueRow({
         </span>
         <span className={styles.rowAction}>
           <ActionChip row={row} />
+          {row.result?.meta.snapshot_served && (
+            <span
+              className={styles.snapshotPill}
+              title="Response served from a committed exemplar snapshot. Open the row and use Re-run live to hit the live API."
+            >
+              Cached
+            </span>
+          )}
         </span>
       </div>
     </div>
@@ -812,7 +844,7 @@ export default function IntegratedPage() {
   );
 
   const streamRow = useCallback(
-    async (rowSnapshot: Row) => {
+    async (rowSnapshot: Row, opts: { bypassCache?: boolean } = {}) => {
       abortControllers.current.get(rowSnapshot.id)?.abort();
       const controller = new AbortController();
       abortControllers.current.set(rowSnapshot.id, controller);
@@ -836,6 +868,7 @@ export default function IntegratedPage() {
             company: rowSnapshot.company,
             example_id:
               rowSnapshot.source === "exemplar" ? rowSnapshot.id : null,
+            bypass_cache: opts.bypassCache === true,
           }),
           signal: controller.signal,
         });
@@ -1245,6 +1278,9 @@ export default function IntegratedPage() {
         onToggleUnderHood={() =>
           selectedRow && onToggleUnderHood(selectedRow.id)
         }
+        onRerunLive={() => {
+          if (selectedRow) streamRow(selectedRow, { bypassCache: true });
+        }}
       />
     </main>
   );

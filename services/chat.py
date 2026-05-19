@@ -19,6 +19,7 @@ from anthropic import AsyncAnthropic
 from services.config import is_local
 from services.embeddings import embed, find_neighbours
 from services.prompts import chat_system_blocks
+from services.snapshots import load_chat_snapshot
 from services.telemetry import write_request_row
 from services.validation import check_input
 
@@ -45,6 +46,7 @@ async def chat_stream(
     profile_for_validation: str | None = None,
     company_for_validation: str | None = None,
     context: dict[str, Any] | None = None,
+    bypass_cache: bool = False,
 ) -> AsyncIterator[dict[str, Any]]:
     """
     Stream tokens from Sonnet for the chat build. Yields events:
@@ -70,12 +72,28 @@ async def chat_stream(
         text = (first_user or {}).get("content", "") if first_user else ""
         input_lang = check_input(text if isinstance(text, str) else "", None)
 
-    request_id = str(uuid.uuid4())
     turn_count = sum(1 for m in messages if m.get("role") == "user")
     input_chars = sum(
         len(m.get("content", "")) if isinstance(m.get("content"), str) else 0
         for m in messages
     )
+
+    # Snapshot replay: first turn on an exemplar lead, canonical starter prompt.
+    if (
+        example_id
+        and not bypass_cache
+        and len(messages) == 1
+        and messages[0].get("role") == "user"
+    ):
+        snap = load_chat_snapshot(example_id, messages[0]["content"])
+        if snap is not None:
+            async for event in _replay_chat_snapshot(
+                snap, context, example_id, input_lang, input_chars
+            ):
+                yield event
+            return
+
+    request_id = str(uuid.uuid4())
     started = time.perf_counter()
     output_text_parts: list[str] = []
     usage_in = usage_out = 0
@@ -172,5 +190,59 @@ async def chat_stream(
             "model": MODEL_ID,
             "turn_count": turn_count,
             "eval_neighbours": neighbours,
+        },
+    }
+
+
+async def _replay_chat_snapshot(
+    snap: dict[str, Any],
+    context: dict[str, Any] | None,
+    example_id: str,
+    input_lang: str,
+    input_chars: int,
+) -> AsyncIterator[dict[str, Any]]:
+    request_id = str(uuid.uuid4())
+    assistant_text = snap["assistant_text"]
+    usage = snap["usage"]
+
+    profile = (context or {}).get("profile") or ""
+    company = (context or {}).get("company") or ""
+    neighbour_text = "\n\n".join(p for p in (profile.strip(), company.strip()) if p)
+    neighbours = await find_neighbours(neighbour_text or assistant_text or " ", k=3)
+
+    yield {"type": "text", "delta": assistant_text}
+
+    await write_request_row(
+        {
+            "request_id": request_id,
+            "mode": "chat",
+            "example_id": example_id,
+            "input_lang": input_lang,
+            "input_char_count": input_chars,
+            "model_id": snap["model"],
+            "thinking_enabled": False,
+            "input_tokens": usage["input_tokens"],
+            "output_tokens": usage["output_tokens"],
+            "cache_hit": False,
+            "latency_ms": usage["latency_ms"],
+            "embedding": None,
+            "snapshot_served": True,
+            "turn_count": 1,
+            "extractor_complete": None,
+        }
+    )
+
+    yield {
+        "type": "done",
+        "meta": {
+            "request_id": request_id,
+            "latency_ms": usage["latency_ms"],
+            "tokens_in": usage["input_tokens"],
+            "tokens_out": usage["output_tokens"],
+            "cache_hit": False,
+            "model": snap["model"],
+            "turn_count": 1,
+            "eval_neighbours": neighbours,
+            "snapshot_served": True,
         },
     }

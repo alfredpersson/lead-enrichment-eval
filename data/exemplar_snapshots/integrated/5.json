@@ -1,0 +1,79 @@
+{
+  "exemplar_id": "5",
+  "scenario": "multilingual_swedish",
+  "generated_at": "2026-05-19T08:50:43.915978+00:00",
+  "model": "claude-sonnet-4-6",
+  "system_prompt_sha256": "5104f9f95d5f07ab064510b40c5a0e4eb8784a7caf2a857e460fa9bb7ee0bad0",
+  "tool_schema_sha256": "6f68418b98c97c30e07a2fb89cf36d7b3acfb03d400419fb2cd63570be724985",
+  "output": {
+    "classification": {
+      "industry": "B2B SaaS",
+      "segment": "Financial software for Nordic SMBs",
+      "seniority": "VP",
+      "company_size": "51-200"
+    },
+    "fit_score": {
+      "value": 0.88,
+      "dimensions": {
+        "stage_match": 1.0,
+        "headcount_match": 1.0,
+        "arr_match": 0.6,
+        "product_shape_match": 1.0,
+        "role_match": 1.0
+      }
+    },
+    "claims": [
+      {
+        "text": "Norrsken Labs is a B2B SaaS company",
+        "source_quote": "Norrsken Labs \u00e4r en nordisk B2B SaaS-leverant\u00f6r av finansiell mjukvara f\u00f6r SMB-segmentet",
+        "confidence": 1.0
+      },
+      {
+        "text": "The company has approximately 140 employees",
+        "source_quote": "Circa 140 anst\u00e4llda",
+        "confidence": 1.0
+      },
+      {
+        "text": "Norrsken Labs raised a Series B from Atomico in 2024",
+        "source_quote": "Serie B p\u00e5 35M EUR fr\u00e5n Atomico (2024)",
+        "confidence": 1.0
+      },
+      {
+        "text": "The product includes AI-driven cash flow analysis",
+        "source_quote": "AI-driven kassafl\u00f6desanalys f\u00f6r nordiska sm\u00e5 och medelstora f\u00f6retag",
+        "confidence": 1.0
+      },
+      {
+        "text": "A new AI product is currently being piloted",
+        "source_quote": "Rekryterar f\u00f6r en ny AI-produkt vi k\u00f6r pilot p\u00e5 just nu",
+        "confidence": 1.0
+      },
+      {
+        "text": "Astrid Lindqvist holds the VP Product role",
+        "source_quote": "VP Product p\u00e5 Norrsken Labs sedan 2023",
+        "confidence": 1.0
+      }
+    ],
+    "draft_hook": {
+      "text": "Hi Astrid \u2013 congrats on Norrsken Labs' Series B from Atomico last year. With AI-driven cash flow analysis already in your core product and a new AI feature currently in pilot, you're clearly in a build-fast moment. Would love to show you how we help VP Product teams at B2B SaaS companies move those pilots to production faster \u2014 open to a 20-minute call?",
+      "claims_used": [
+        "Norrsken Labs raised a Series B from Atomico in 2024",
+        "The product includes AI-driven cash flow analysis",
+        "A new AI product is currently being piloted",
+        "Astrid Lindqvist holds the VP Product role",
+        "Norrsken Labs is a B2B SaaS company"
+      ],
+      "confidence": 0.88
+    },
+    "action": "auto_add",
+    "reasoning": "Astrid Lindqvist is VP Product \u2014 a direct ICP role match. Norrsken Labs sits firmly in the ICP on three of five dimensions: Series B stage (1.0), headcount of ~140 within the 20\u2013250 band (1.0), and product shape as a B2B SaaS company already shipping AI-driven cash flow analysis with another AI product actively in pilot (1.0). ARR is the only dimension without an explicit data point \u2014 the 35M EUR figure is the funding round size, not ARR \u2014 so arr_match is scored conservatively at 0.6, though a 140-person Series B SaaS business is very likely within the $2M\u2013$50M ARR window. All six claims are grounded in verbatim quotes from the input. Holistic fit score of 0.88 exceeds the 0.80 auto_add threshold with every claim grounded, so action = auto_add."
+  },
+  "thinking_trace": "Let me analyze this lead against the ICP.\n\n**Person:** Astrid Lindqvist, VP Product at Norrsken Labs since 2023.\n\n**Company:** Norrsken Labs - Nordic B2B SaaS, financial software for SMB segment, Series B (35M EUR from Atomico, 2024), ~140 employees, customers are Nordic companies with 10-500 employees.\n\n**ICP Scoring:**\n\n1. **Stage match**: Series B \u2713 (ICP: Series A, B, C) \u2192 1.0\n\n\n2. **Headcount match**: ~140 employees (ICP: 20-250) \u2192 1.0\n3. **ARR match**: The 35M EUR is the funding round, not ARR. We don't have explicit revenue data, but a Series B company of this size in the Nordic B2B SaaS space targeting SMBs would likely fall within the $2M-$50M ICP range. I'll score this moderately since the funding stage suggests alignment even though ARR isn't directly confirmed.\n4. **Product shape match**: They're building AI-driven cash flow analysis and automated bookkeeping tools, with active development on a new AI product currently in pilot. This is a strong fit for the AI-focused ICP \u2192 1.0\n5. **Role match**: VP Product is directly aligned with the target roles \u2192 1.0\n\nNow I'm verifying the claims against what's stated: Series B funding from Atomico in 2024, approximately 140 employees across Stockholm, Helsinki, and other locations.\n\nThe company checks all the boxes as a Nordic B2B SaaS provider in the SMB financial software space with AI capabilities. For ARR, there's no explicit figure mentioned, but given the Series B funding of 35M EUR and the employee count, it's likely within range\u2014though I'll mark this with moderate confidence at 0.6 since it's not directly confirmed.\n\nLooking at the overall fit: funding stage, headcount, product shape, and role all score perfectly at 1.0, bringing the holistic score to around 0.90. The only real gap is the unspecified ARR, but we have strong signals across the other dimensions\u2014enough to move forward rather than refuse.\n\nSince ARR can be reasonably inferred from the Series B stage and all my claims are grounded in verbatim quotes, this meets the threshold for auto_add. The fit score lands at 0.87, well above the 0.80 cutoff.\n\nNow I'm drafting the hook using only what's directly stated: VP Product role at Norrsken Labs, the focus on AI-driven cash flow analysis and automated bookkeeping for Nordic SMBs, the new AI product currently in pilot, and the Series B funding from Atomico.\n\nI need to translate the Swedish quote into English and craft a message that references both the existing product and the new pilot they're running, positioning our offering as a natural fit for scaling their VP Product operations.",
+  "usage": {
+    "input_tokens": 538,
+    "output_tokens": 2182,
+    "thinking_tokens": null,
+    "latency_ms": 31621,
+    "cache_hit": true
+  }
+}

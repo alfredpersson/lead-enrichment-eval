@@ -1,0 +1,90 @@
+{
+  "exemplar_id": "1",
+  "scenario": "strong_fit",
+  "generated_at": "2026-05-19T08:47:07.102444+00:00",
+  "model": "claude-sonnet-4-6",
+  "system_prompt_sha256": "5104f9f95d5f07ab064510b40c5a0e4eb8784a7caf2a857e460fa9bb7ee0bad0",
+  "tool_schema_sha256": "6f68418b98c97c30e07a2fb89cf36d7b3acfb03d400419fb2cd63570be724985",
+  "output": {
+    "classification": {
+      "industry": "B2B SaaS",
+      "segment": "AI-augmented sales execution tools for enterprise revenue teams",
+      "seniority": "VP",
+      "company_size": "51-200"
+    },
+    "fit_score": {
+      "value": 0.88,
+      "dimensions": {
+        "stage_match": 1.0,
+        "headcount_match": 1.0,
+        "arr_match": 0.65,
+        "product_shape_match": 1.0,
+        "role_match": 1.0
+      }
+    },
+    "claims": [
+      {
+        "text": "Lattice Forge is a Series B company.",
+        "source_quote": "Series B B2B SaaS company",
+        "confidence": 1.0
+      },
+      {
+        "text": "The company has approximately 120 employees.",
+        "source_quote": "~120 employees across NYC, Berlin, and Sydney",
+        "confidence": 1.0
+      },
+      {
+        "text": "Maya Chen holds the VP of Product title at Lattice Forge.",
+        "source_quote": "VP of Product at Lattice Forge",
+        "confidence": 1.0
+      },
+      {
+        "text": "Lattice Forge has shipped a GA AI feature: call summarization for sales teams.",
+        "source_quote": "We just shipped our first GA AI feature (call summarization for sales teams)",
+        "confidence": 1.0
+      },
+      {
+        "text": "Two additional AI features are currently in active development.",
+        "source_quote": "working on the next two",
+        "confidence": 0.9
+      },
+      {
+        "text": "Maya has a background in product at Gong, a sales intelligence platform.",
+        "source_quote": "Previously PM at Gong",
+        "confidence": 1.0
+      },
+      {
+        "text": "Maya explicitly expressed interest in discussing AI feature adoption.",
+        "source_quote": "Always interested in talking to teams thinking about AI feature adoption",
+        "confidence": 1.0
+      },
+      {
+        "text": "The company raised a $28M Series B in 2025, backed by Sequoia and Bessemer.",
+        "source_quote": "Backed by Sequoia and Bessemer ($28M Series B in 2025)",
+        "confidence": 1.0
+      }
+    ],
+    "draft_hook": {
+      "text": "Hi Maya \u2013 noticed Lattice Forge just shipped call summarization for sales teams as your first GA AI feature and are already working on the next two. Given that you're leading the product org through this AI-native shift at a Series B company of ~120 people, and that you're 'always interested in talking to teams thinking about AI feature adoption,' I'd love to share how we're helping product leaders at similar-stage companies accelerate and de-risk exactly that roadmap.",
+      "claims_used": [
+        "Lattice Forge has shipped a GA AI feature: call summarization for sales teams.",
+        "Two additional AI features are currently in active development.",
+        "Lattice Forge is a Series B company.",
+        "The company has approximately 120 employees.",
+        "Maya explicitly expressed interest in discussing AI feature adoption.",
+        "Maya Chen holds the VP of Product title at Lattice Forge."
+      ],
+      "confidence": 0.88
+    },
+    "action": "auto_add",
+    "reasoning": "Maya Chen is an exact role match (VP of Product \u2014 one of the explicitly listed ICP target roles). Lattice Forge is Series B (within ICP stage range), ~120 employees (within 20\u2013250 headcount band), and a B2B SaaS company with a shipped GA AI feature and two more in active development \u2014 a textbook product-shape match. The one mild uncertainty is ARR: the $28M figure cited is Series B funding raised, not ARR. However, a Series B backed by Sequoia and Bessemer with enterprise logos like Datadog, Notion, and Atlassian makes it very plausible ARR falls within the $2M\u2013$50M ICP band; arr_match is scored at 0.65 to reflect the absence of an explicit ARR figure rather than a confirmed miss. All claims are grounded with verbatim source quotes. Holistic fit score is 0.88, exceeding the 0.80 auto_add threshold with every claim grounded, so action is auto_add."
+  },
+  "thinking_trace": "Let me analyze this lead carefully against the ICP.\n\n**Classification:**\n- Industry: B2B SaaS\n- Segment: AI-augmented sales execution tools for enterprise revenue teams\n- Seniority: VP (VP of Product)\n- Company size: ~120 employees \u2192 \"51-200\" bucket\n\n**ICP Fit Analysis:**\n\n1. **Stage match**: Series B \u2713 (ICP: Series A, B, C) \u2192 1.0\n2. **Headcount match**: ~120 employees \u2713 (ICP: 20-250) \u2192 1.0\n\n\n3. **ARR match**: The $28M raise signals they're likely in the $2M-$50M ARR range, though it's not explicitly stated, so I'll score this moderately given the strong funding backing from Sequoia and Bessemer.\n4. **Product shape match**: B2B SaaS with AI features already deployed for sales teams \u2192 1.0\n5. **Role match**: VP of Product aligns perfectly with what we're looking for.\n\nNow I'm grounding each claim against the source material. The Series B stage, employee count around 120, VP of Product title, the shipped call summarization feature, and the upcoming AI features all check out directly from the profile and company description. The Sequoia and Bessemer backing with the $28M Series B funding in 2025 is confirmed, and the previous PM experience at Gong is also there. The key gap is that ARR isn't explicitly mentioned anywhere\u2014the $28M figure is the funding amount, not revenue.\n\nGiven the Series B stage, the substantial funding from top-tier investors, and enterprise customers like Datadog, Notion, and Atlassian, I can reasonably infer the ARR is likely in a certain range, but without explicit confirmation I'm scoring that match at 0.65. Everything else aligns perfectly: stage, headcount, product direction, and role all hit 1.0. Overall this feels like a 0.88 fit\u2014very strong, with just that ARR uncertainty holding it back slightly.\n\nNow I'm verifying that all the claims I'm making are actually grounded in what was stated. The Series B designation, the headcount around 120, the VP of Product role at Lattice Forge, the focus on call summarization for sales teams\u2014these all check out. The funding amount is confirmed at $28M, and the B2B SaaS positioning is clear. Since the fit score exceeds 0.80 and the claims are properly sourced, the action should be `auto_add`.\n\nFor the outreach message, I'm drafting something that sticks to only what I can verify: the shipped call summarization feature, the two features in development, the Series B stage, the team size, and Maya's stated interest in AI adoption. The hook ties these together naturally without overreaching beyond what's documented.",
+  "usage": {
+    "input_tokens": 515,
+    "output_tokens": 2162,
+    "thinking_tokens": null,
+    "latency_ms": 30319,
+    "cache_hit": false
+  }
+}

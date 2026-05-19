@@ -1,0 +1,62 @@
+{
+  "exemplar_id": "3",
+  "scenario": "weak_fit_sparse",
+  "generated_at": "2026-05-19T08:48:57.935821+00:00",
+  "model": "claude-sonnet-4-6",
+  "system_prompt_sha256": "5104f9f95d5f07ab064510b40c5a0e4eb8784a7caf2a857e460fa9bb7ee0bad0",
+  "tool_schema_sha256": "6f68418b98c97c30e07a2fb89cf36d7b3acfb03d400419fb2cd63570be724985",
+  "output": {
+    "classification": {
+      "industry": "Professional services",
+      "segment": "Freelance / Solo creative services",
+      "seniority": "IC",
+      "company_size": "1-10"
+    },
+    "fit_score": {
+      "value": 0.04,
+      "dimensions": {
+        "stage_match": 0.0,
+        "headcount_match": 0.05,
+        "arr_match": 0.0,
+        "product_shape_match": 0.0,
+        "role_match": 0.05
+      }
+    },
+    "claims": [
+      {
+        "text": "Riley Park is a freelance brand designer, operating as a solo individual contributor.",
+        "source_quote": "Freelance brand designer",
+        "confidence": 1.0
+      },
+      {
+        "text": "Work is focused on logo and identity systems for small businesses.",
+        "source_quote": "Logo & identity systems for small biz",
+        "confidence": 1.0
+      },
+      {
+        "text": "Operates at a very limited capacity of 1\u20132 new clients per quarter.",
+        "source_quote": "Available for 1-2 new clients/quarter",
+        "confidence": 1.0
+      }
+    ],
+    "draft_hook": {
+      "text": "Hi Riley \u2014 saw you do 'Logo & identity systems for small biz' as a 'Freelance brand designer.' Not a fit for what we're focused on right now, but best of luck with your upcoming client slots!",
+      "claims_used": [
+        "Riley Park is a freelance brand designer, operating as a solo individual contributor.",
+        "Work is focused on logo and identity systems for small businesses.",
+        "Operates at a very limited capacity of 1\u20132 new clients per quarter."
+      ],
+      "confidence": 0.04
+    },
+    "action": "discard",
+    "reasoning": "This lead is a solo freelance brand designer (IC-level) offering logo and identity work to small businesses. It fails every ICP dimension: (1) there is no company, therefore no funding stage; (2) headcount is 1 (well below the 20\u2013250 range); (3) there is no ARR or software product of any kind; (4) the service offering \u2014 brand design \u2014 is entirely unrelated to B2B SaaS or AI features; and (5) the role is a freelance individual contributor, not any of the target buyer personas. All claims are grounded in verbatim quotes from the profile. Fit score is 0.04 (effectively zero across all dimensions). Action is DISCARD."
+  },
+  "thinking_trace": "Let me analyze this lead against the ICP.\n\nRiley Park is a freelance brand designer doing logo & identity systems for small businesses. This is clearly an individual freelancer (IC level), not a company. There's no indication of:\n- Series A/B/C stage\n- Headcount of 20-250\n- ARR of $2M-$50M\n- B2B SaaS product with AI features\n- Target role match (VP Product, Head of AI/ML, Director of Engineering, Founder/CTO)\n\nThis is clearly a very poor fit. The fit score will be very low. All claims I can make are grounded from the text.\n \nNow I'm scoring across the key dimensions\u2014stage, headcount, ARR, product type, and role\u2014and they're all misaligned with what we're looking for. The holistic fit comes out to around 0.05, which means this should be discarded since it falls well below our 0.50 threshold and doesn't match any of our target criteria.\n\nLooking at the specific claims, I can pull direct quotes showing Riley is a freelance brand designer working on logo and identity systems, available for just a couple new clients each quarter. Since we're discarding anyway, the hook doesn't need much attention.",
+  "usage": {
+    "input_tokens": 372,
+    "output_tokens": 1060,
+    "thinking_tokens": null,
+    "latency_ms": 16735,
+    "cache_hit": true
+  }
+}

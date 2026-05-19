@@ -45,7 +45,17 @@ cd web && npm install && npm run dev
 
 Copy `.env.example` to `.env` and fill in credentials. The web app needs `MODAL_BASE_URL`; the Python services need `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `DATABASE_URL` (Neon pooled, PgBouncer transaction mode), and `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`.
 
-To bring up the backend the first time: apply `migrations/0001_init.sql` against Neon, `modal secret create lead-enrichment` with the API keys, `modal deploy services/app.py`, set `MODAL_BASE_URL` on Vercel, and `python -m services.eval_seed` to populate `eval_set` with embedded exemplars.
+To bring up the backend the first time: apply each `migrations/*.sql` file against Neon in order, `modal secret create lead-enrichment` with the API keys, `modal deploy services/app.py`, set `MODAL_BASE_URL` on Vercel, and `python -m services.eval_seed` to populate `eval_set` with embedded exemplars.
+
+### Exemplar snapshots
+
+The five pre-loaded exemplars on `/integrated` and `/chat` are served from committed JSON snapshots under `data/exemplar_snapshots/` so prospects don't re-burn API tokens on the same inputs. Regenerate after changing the system prompt, tool schema, or model:
+
+```sh
+uv run python scripts/regenerate_exemplar_snapshots.py
+```
+
+Both surfaces expose a **Re-run live** affordance per cached row that bypasses the snapshot. Free-form pasted inputs always run live.
 
 ## License
 

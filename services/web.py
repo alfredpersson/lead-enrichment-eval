@@ -42,6 +42,7 @@ class EnrichRequest(BaseModel):
     profile: str
     company: str | None = None
     example_id: str | None = None
+    bypass_cache: bool = False
 
 
 class ChatMessage(BaseModel):
@@ -59,6 +60,7 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     example_id: str | None = None
     context: ChatContext | None = None
+    bypass_cache: bool = False
 
 
 class NeighboursRequest(BaseModel):
@@ -91,6 +93,7 @@ def build_app() -> FastAPI:
                     payload.profile,
                     payload.company,
                     example_id=payload.example_id,
+                    bypass_cache=payload.bypass_cache,
                 ):
                     yield f"data: {json.dumps(event)}\n\n"
             except ValidationError as e:
@@ -115,6 +118,7 @@ def build_app() -> FastAPI:
                     messages,
                     example_id=payload.example_id,
                     context=context,
+                    bypass_cache=payload.bypass_cache,
                 ):
                     yield f"data: {json.dumps(event)}\n\n"
             except ValidationError as e:

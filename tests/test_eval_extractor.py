@@ -12,8 +12,11 @@ from services.eval.dataset import EvalItem
 from services.eval.extractor import (
     REFUSAL_HINTS,
     _is_complete,
+    extract_chat_outputs,
     extract_one_text,
+    make_completeness_check,
 )
+from services.eval.inference import InferenceResult
 
 
 def _item() -> EvalItem:
@@ -160,3 +163,123 @@ def test_refusal_hints_contains_expected_phrases():
     # behaviour doesn't drift silently.
     assert "i can't help" in REFUSAL_HINTS
     assert "i refuse" in REFUSAL_HINTS
+
+
+# ----- Tool call returned but output is incomplete --------------------------
+
+
+@pytest.mark.asyncio
+async def test_extractor_tool_use_but_incomplete_output():
+    """A tool call with missing classification fields must come back with
+    extractor_complete=False so the multi-turn loop keeps going."""
+    partial = _good_output()
+    partial["classification"]["industry"] = ""  # missing field
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=_mock_response_tool(partial)))
+    )
+    sem = asyncio.Semaphore(1)
+    result = await extract_one_text(client, _item(), "some chat text", sem)
+    assert result.success is True
+    assert result.extractor_complete is False
+    assert result.output == partial
+
+
+@pytest.mark.asyncio
+async def test_extractor_records_token_usage_on_tool_call():
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=_mock_response_tool(_good_output())))
+    )
+    sem = asyncio.Semaphore(1)
+    result = await extract_one_text(client, _item(), "chat text", sem)
+    assert result.input_tokens == 15
+    assert result.output_tokens == 12
+
+
+@pytest.mark.asyncio
+async def test_extractor_handles_anthropic_exception():
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(side_effect=RuntimeError("boom")))
+    )
+    sem = asyncio.Semaphore(1)
+    result = await extract_one_text(client, _item(), "chat text", sem)
+    assert result.success is False
+    assert "RuntimeError" in (result.error or "")
+
+
+# ----- make_completeness_check -----------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_make_completeness_check_returns_bool_from_extractor():
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=_mock_response_tool(_good_output())))
+    )
+    check = make_completeness_check(client, asyncio.Semaphore(1))
+    assert await check(_item(), "complete chat text") is True
+
+
+@pytest.mark.asyncio
+async def test_make_completeness_check_false_on_incomplete():
+    out = _good_output()
+    out["classification"]["seniority"] = ""  # break completeness
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=_mock_response_tool(out)))
+    )
+    check = make_completeness_check(client, asyncio.Semaphore(1))
+    assert await check(_item(), "partial") is False
+
+
+# ----- extract_chat_outputs preserves order and fires on_done --------------
+
+
+def _chat_inference_result(item_id: str, text: str | None = None, error: str | None = None) -> InferenceResult:
+    return InferenceResult(
+        item_id=item_id,
+        success=error is None,
+        output=None,
+        text=text,
+        latency_ms=10,
+        input_tokens=5,
+        output_tokens=5,
+        thinking_tokens=None,
+        cache_read_tokens=0,
+        error=error,
+        raw_stop_reason="end_turn",
+    )
+
+
+def _item_with_id(item_id: str) -> EvalItem:
+    return EvalItem(
+        id=item_id, kind="exemplar", scenario="t", label="t",
+        profile=f"profile {item_id}: VP Product", company=None,
+        gold={"input_lang": "en", "expected_action": "auto_add"},
+    )
+
+
+@pytest.mark.asyncio
+async def test_extract_chat_outputs_preserves_item_order_and_fires_on_done():
+    items = [_item_with_id(str(i)) for i in range(3)]
+    chat_results = [_chat_inference_result(str(i), text=f"chat {i}") for i in range(3)]
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=_mock_response_tool(_good_output())))
+    )
+    fired: list[str] = []
+
+    results = await extract_chat_outputs(
+        items, chat_results, client=client, on_done=lambda r: fired.append(r.item_id)
+    )
+    assert [r.item_id for r in results] == ["0", "1", "2"]
+    assert sorted(fired) == ["0", "1", "2"]
+
+
+@pytest.mark.asyncio
+async def test_extract_chat_outputs_skips_anthropic_call_when_chat_failed():
+    """Failed chat results have no text — the extractor must short-circuit."""
+    item = _item_with_id("1")
+    failed = _chat_inference_result("1", error="chat exploded")
+    client = SimpleNamespace(messages=SimpleNamespace(create=AsyncMock()))
+
+    results = await extract_chat_outputs([item], [failed], client=client)
+    assert results[0].success is False
+    assert "chat exploded" in (results[0].error or "")
+    client.messages.create.assert_not_called()

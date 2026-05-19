@@ -10,10 +10,15 @@ import pytest
 
 from services.eval.dataset import EvalItem
 from services.eval.inference import (
-    ChatResult,
+    CHAT_MODEL_ID,
+    INTEGRATED_MODEL_ID,
+    _call_chat,
+    _call_integrated,
     _parse_chat,
     _parse_integrated,
+    run_chat,
     run_chat_multiturn,
+    run_integrated,
 )
 
 
@@ -195,3 +200,138 @@ async def test_multiturn_propagates_exception_and_marks_cap_hit():
     assert r.success is False
     assert r.cap_hit is True
     assert "boom" in (r.error or "")
+
+
+# ----- _call_integrated / _call_chat per-call drivers ----------------------
+
+
+@pytest.mark.asyncio
+async def test_call_integrated_sends_thinking_and_tool():
+    """The integrated driver must request thinking + the enrich_lead tool."""
+    captured = {}
+
+    async def fake_create(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="enrich_lead",
+                    input={"action": "auto_add"},
+                )
+            ],
+            usage=SimpleNamespace(
+                input_tokens=100, output_tokens=50, cache_read_input_tokens=0
+            ),
+            stop_reason="tool_use",
+        )
+
+    client = SimpleNamespace(messages=SimpleNamespace(create=fake_create))
+    sem = asyncio.Semaphore(1)
+    result = await _call_integrated(client, _item(), sem)
+    assert result.success is True
+    assert result.output == {"action": "auto_add"}
+    assert captured["model"] == INTEGRATED_MODEL_ID
+    assert captured["thinking"]["type"] == "enabled"
+    assert any(t["name"] == "enrich_lead" for t in captured["tools"])
+    assert captured["tool_choice"] == {"type": "auto"}
+
+
+@pytest.mark.asyncio
+async def test_call_integrated_handles_exception():
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(side_effect=RuntimeError("nope")))
+    )
+    sem = asyncio.Semaphore(1)
+    result = await _call_integrated(client, _item(), sem)
+    assert result.success is False
+    assert "RuntimeError" in (result.error or "")
+    assert result.output is None
+
+
+@pytest.mark.asyncio
+async def test_call_chat_sends_no_thinking_no_tools():
+    captured = {}
+
+    async def fake_create(**kwargs):
+        captured.update(kwargs)
+        return _mock_text_response("hi")
+
+    client = SimpleNamespace(messages=SimpleNamespace(create=fake_create))
+    sem = asyncio.Semaphore(1)
+    result = await _call_chat(client, _item(), sem)
+    assert result.success is True
+    assert result.text == "hi"
+    assert captured["model"] == CHAT_MODEL_ID
+    assert "thinking" not in captured
+    assert "tools" not in captured
+
+
+@pytest.mark.asyncio
+async def test_call_chat_handles_exception():
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(side_effect=RuntimeError("net")))
+    )
+    sem = asyncio.Semaphore(1)
+    result = await _call_chat(client, _item(), sem)
+    assert result.success is False
+    assert "RuntimeError" in (result.error or "")
+
+
+# ----- run_integrated / run_chat fan-out + on_done -------------------------
+
+
+@pytest.mark.asyncio
+async def test_run_integrated_fires_on_done_per_item():
+    tool_resp = SimpleNamespace(
+        content=[
+            SimpleNamespace(type="tool_use", name="enrich_lead", input={"action": "auto_add"})
+        ],
+        usage=SimpleNamespace(input_tokens=10, output_tokens=5, cache_read_input_tokens=0),
+        stop_reason="tool_use",
+    )
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=tool_resp))
+    )
+    items = [_item(f"id-{i}") for i in range(3)]
+    fired: list[str] = []
+
+    results = await run_integrated(items, client=client, on_done=lambda r: fired.append(r.item_id))
+    assert {r.item_id for r in results} == {"id-0", "id-1", "id-2"}
+    assert sorted(fired) == ["id-0", "id-1", "id-2"]
+    # All results carry the integrated output shape.
+    for r in results:
+        assert r.output == {"action": "auto_add"}
+
+
+@pytest.mark.asyncio
+async def test_run_integrated_empty_input():
+    """Empty input must short-circuit without building a client."""
+    # No client provided; would raise if construction were attempted.
+    result = await run_integrated([])
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_run_chat_fires_on_done_per_item():
+    client = SimpleNamespace(
+        messages=SimpleNamespace(create=AsyncMock(return_value=_mock_text_response("reply")))
+    )
+    items = [_item(f"id-{i}") for i in range(2)]
+    fired: list[str] = []
+    results = await run_chat(items, client=client, on_done=lambda r: fired.append(r.item_id))
+    assert sorted(r.item_id for r in results) == ["id-0", "id-1"]
+    assert sorted(fired) == ["id-0", "id-1"]
+
+
+@pytest.mark.asyncio
+async def test_run_chat_empty_input():
+    assert await run_chat([]) == []
+
+
+@pytest.mark.asyncio
+async def test_run_chat_multiturn_empty_input():
+    async def check(_item, _text):
+        return True
+
+    assert await run_chat_multiturn([], extract_and_check=check) == []

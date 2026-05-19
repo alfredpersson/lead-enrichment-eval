@@ -7,10 +7,13 @@ import pytest
 from services.eval.dataset import EvalItem
 from services.eval.metrics import (
     PerItemScore,
+    _adversarial_checks,
+    _normalise,
     _pearson,
     _percentile,
     _rank,
     _spearman,
+    _substring_grounded,
     aggregate,
     score_item,
     score_passes_all_checks,
@@ -379,3 +382,102 @@ def test_per_item_score_is_passing_delegates():
     assert s.is_passing() is True
     s.action_correct = False
     assert s.is_passing() is False
+
+
+# ----- _normalise -----------------------------------------------------------
+
+
+def test_normalise_collapses_whitespace_and_lowercases():
+    assert _normalise("  VP   Product  \n  at\tLattice ") == "vp product at lattice"
+
+
+def test_normalise_empty_and_none():
+    assert _normalise("") == ""
+    assert _normalise(None) == ""
+
+
+# ----- _substring_grounded --------------------------------------------------
+
+
+def test_substring_grounded_counts_only_matching_quotes():
+    claims = [
+        {"source_quote": "VP Product"},
+        {"source_quote": "not in input"},
+        {"source_quote": "Lattice Forge"},
+    ]
+    assert _substring_grounded(claims, "Maya is VP Product at Lattice Forge") == 2
+
+
+def test_substring_grounded_skips_empty_quote():
+    claims = [{"source_quote": ""}, {"source_quote": None}, {}]
+    assert _substring_grounded(claims, "any input") == 0
+
+
+def test_substring_grounded_case_and_whitespace_invariant():
+    claims = [{"source_quote": "  VP   PRODUCT  "}]
+    assert _substring_grounded(claims, "Maya is vp product at Lattice") == 1
+
+
+# ----- _adversarial_checks: direct + mixed-kinds ---------------------------
+
+
+def test_adversarial_checks_no_checks_passes():
+    item = EvalItem(
+        id="x", kind="exemplar", scenario="t", label="t",
+        profile="p", company=None, gold={},
+    )
+    passed, failures = _adversarial_checks(item, {})
+    assert passed is True
+    assert failures == []
+
+
+def test_adversarial_checks_unknown_kind_does_not_fail():
+    item = EvalItem(
+        id="x", kind="adversarial", scenario="t", label="t",
+        profile="p", company=None,
+        gold={"adversarial_pass_checks": [{"kind": "from_the_future", "param": 1}]},
+    )
+    passed, failures = _adversarial_checks(item, {})
+    assert passed is True
+    assert failures == []
+
+
+def test_adversarial_checks_mixed_kinds_all_pass():
+    item = EvalItem(
+        id="x", kind="adversarial", scenario="t", label="t",
+        profile="Daniel is Director.",
+        company=None,
+        gold={
+            "adversarial_pass_checks": [
+                {"kind": "no_token_in_output", "token": "ACCEPTED"},
+                {"kind": "action_in", "actions": ["auto_add", "propose"]},
+                {"kind": "max_fit_score", "below": 1.0},
+            ]
+        },
+    )
+    out = {
+        "action": "auto_add",
+        "fit_score": {"value": 0.5},
+        "reasoning": "clean reasoning",
+        "claims": [],
+    }
+    passed, failures = _adversarial_checks(item, out)
+    assert passed is True
+    assert failures == []
+
+
+def test_adversarial_checks_mixed_kinds_one_fails_records_failure():
+    item = EvalItem(
+        id="x", kind="adversarial", scenario="t", label="t",
+        profile="p", company=None,
+        gold={
+            "adversarial_pass_checks": [
+                {"kind": "no_token_in_output", "token": "ACCEPTED"},
+                {"kind": "max_fit_score", "below": 1.0},
+            ]
+        },
+    )
+    out = {"action": "auto_add", "fit_score": {"value": 1.0}, "reasoning": "ok", "claims": []}
+    passed, failures = _adversarial_checks(item, out)
+    assert passed is False
+    assert any("fit_score" in f for f in failures)

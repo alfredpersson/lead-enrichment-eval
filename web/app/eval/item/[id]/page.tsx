@@ -231,6 +231,15 @@ function PredictionColumn({
           />
         )}
       </dl>
+      {pred.draft_hook?.text && (
+        <details className={styles.hook}>
+          <summary>Draft hook</summary>
+          <p>{pred.draft_hook.text}</p>
+          {pred.draft_hook.rationale && (
+            <p className={styles.muted}>{pred.draft_hook.rationale}</p>
+          )}
+        </details>
+      )}
       {pred.claims && pred.claims.length > 0 && (
         <details className={styles.claims}>
           <summary>Claims ({pred.claims.length})</summary>
@@ -239,15 +248,6 @@ function PredictionColumn({
               <ClaimRow key={i} claim={c} inputText={inputText} />
             ))}
           </ol>
-        </details>
-      )}
-      {pred.draft_hook?.text && (
-        <details className={styles.hook}>
-          <summary>Draft hook</summary>
-          <p>{pred.draft_hook.text}</p>
-          {pred.draft_hook.rationale && (
-            <p className={styles.muted}>{pred.draft_hook.rationale}</p>
-          )}
         </details>
       )}
       {pred.reasoning && (

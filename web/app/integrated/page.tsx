@@ -247,15 +247,41 @@ function ClaimsList({
 }
 
 function HookView({ hook }: { hook: EnrichOutput["draft_hook"] }) {
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<number | null>(null);
+  useEffect(() => {
+    return () => {
+      if (copyTimer.current) window.clearTimeout(copyTimer.current);
+    };
+  }, []);
   if (!hook?.text) return null;
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(hook.text);
+      setCopied(true);
+      if (copyTimer.current) window.clearTimeout(copyTimer.current);
+      copyTimer.current = window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable; leave button as is
+    }
+  }
   return (
     <div className={styles.hook}>
       <p className={styles.hookText}>“{hook.text}”</p>
-      <p className={styles.hookMeta}>
-        Uses {hook.claims_used.length} claim
-        {hook.claims_used.length === 1 ? "" : "s"} · confidence{" "}
-        {hook.confidence.toFixed(2)}
-      </p>
+      <div className={styles.hookFooter}>
+        <p className={styles.hookMeta}>
+          Uses {hook.claims_used.length} claim
+          {hook.claims_used.length === 1 ? "" : "s"} · confidence{" "}
+          {hook.confidence.toFixed(2)}
+        </p>
+        <button
+          type="button"
+          className={styles.hookCopy}
+          onClick={handleCopy}
+        >
+          {copied ? "Copied" : "Copy hook"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -300,8 +326,15 @@ function UnderTheHood({
       </div>
       {row.underTheHood && (
         <div className={styles.underHoodBody}>
+          {m.snapshot_served && (
+            <p className={styles.snapshotNote}>
+              Served from cached snapshot{formatSnapshotProvenance(m)}.
+            </p>
+          )}
           <div className={styles.telemetryGrid}>
-            <Cell label="Latency" value={`${formatNumber(m.latency_ms)} ms`} />
+            {!m.snapshot_served && (
+              <Cell label="Latency" value={`${formatNumber(m.latency_ms)} ms`} />
+            )}
             <Cell label="Tokens in" value={formatNumber(m.tokens_in)} />
             <Cell label="Tokens out" value={formatNumber(m.tokens_out)} />
             <Cell
@@ -312,7 +345,9 @@ function UnderTheHood({
                   : `${formatNumber(m.thinking_budget)} budget`
               }
             />
-            <Cell label="Cache hit" value={m.cache_hit ? "yes" : "no"} />
+            {!m.snapshot_served && (
+              <Cell label="Cache hit" value={m.cache_hit ? "yes" : "no"} />
+            )}
             <Cell label="Model" value={m.model} />
           </div>
           <div className={styles.subPanel}>
@@ -360,6 +395,19 @@ function Cell({ label, value }: { label: string; value: string }) {
       <span className={styles.telemetryCellValue}>{value}</span>
     </div>
   );
+}
+
+function formatSnapshotProvenance(meta: EnrichOutput["meta"]): string {
+  const date = meta.snapshot_generated_at
+    ? new Date(meta.snapshot_generated_at).toISOString().slice(0, 10)
+    : null;
+  const seconds = meta.latency_ms > 0
+    ? (meta.latency_ms / 1000).toFixed(1) + "s"
+    : null;
+  if (date && seconds) return ` · recorded ${date} at ${seconds}`;
+  if (date) return ` · recorded ${date}`;
+  if (seconds) return ` · recorded at ${seconds}`;
+  return "";
 }
 
 function ScoreCell({ row }: { row: Row }) {
@@ -472,6 +520,13 @@ function SkeletonBody({ row }: { row: Row }) {
         ))}
       </div>
       <SourcePane profile={row.profile} company={row.company} />
+      <div className={styles.hook}>
+        <span className={`${styles.skel} ${styles.skelHookLine}`} />
+        <span
+          className={`${styles.skel} ${styles.skelHookLine}`}
+          style={{ width: "65%" }}
+        />
+      </div>
       <div className={styles.claimsHeader}>
         <span className={styles.sectionLabel}>Claims</span>
       </div>
@@ -482,13 +537,6 @@ function SkeletonBody({ row }: { row: Row }) {
             <span className={`${styles.skel} ${styles.skelClaimQuote}`} />
           </div>
         ))}
-      </div>
-      <div className={styles.hook}>
-        <span className={`${styles.skel} ${styles.skelHookLine}`} />
-        <span
-          className={`${styles.skel} ${styles.skelHookLine}`}
-          style={{ width: "65%" }}
-        />
       </div>
     </>
   );
@@ -551,6 +599,7 @@ function SidepanelBody({
         company={row.company}
         hoveredQuote={row.hoveredQuote}
       />
+      <HookView hook={result.draft_hook} />
       <div className={styles.claimsHeader}>
         <span className={styles.sectionLabel}>Claims</span>
       </div>
@@ -559,7 +608,6 @@ function SidepanelBody({
         inputText={inputText}
         onHover={onHover}
       />
-      <HookView hook={result.draft_hook} />
       <UnderTheHood
         row={row}
         onToggle={onToggleUnderHood}
@@ -873,12 +921,26 @@ export default function IntegratedPage() {
           signal: controller.signal,
         });
         if (!res.ok || !res.body) {
+          const isRateLimited = res.status === 429;
           updateRow(rowSnapshot.id, {
             status: "error",
             selected: false,
-            error: {
-              code: `http_${res.status}`,
-              message: `Upstream returned ${res.status}.`,
+            error: isRateLimited
+              ? {
+                  code: "rate_limited",
+                  message:
+                    "Too many requests. Please wait about a minute before trying again.",
+                }
+              : {
+                  code: `http_${res.status}`,
+                  message: `Upstream returned ${res.status}.`,
+                },
+          });
+          track({
+            name: "error",
+            props: {
+              surface: "integrated",
+              kind: isRateLimited ? "rate_limited" : `http_${res.status}`,
             },
           });
           return;

@@ -114,7 +114,7 @@
 
 .queueColumnHeader {
   display: grid;
-  grid-template-columns: 1.75rem minmax(14rem, 2.2fr) minmax(10rem, 1.5fr) 4.5rem 8.5rem;
+  grid-template-columns: 1.75rem minmax(14rem, 2.2fr) minmax(10rem, 1.5fr) 3rem 10rem;
   gap: 1rem;
   align-items: center;
   padding: 0.55rem 1.25rem;
@@ -162,7 +162,7 @@
 
 .rowSummary {
   display: grid;
-  grid-template-columns: 1.75rem minmax(14rem, 2.2fr) minmax(10rem, 1.5fr) 4.5rem 8.5rem;
+  grid-template-columns: 1.75rem minmax(14rem, 2.2fr) minmax(10rem, 1.5fr) 3rem 10rem;
   gap: 1rem;
   align-items: center;
   padding: 0.85rem 1.25rem;
@@ -221,7 +221,6 @@
 }
 
 .rowScore {
-  text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
@@ -260,23 +259,24 @@
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  background: var(--amber-soft);
+  white-space: nowrap;
+  background: var(--border-soft);
   color: var(--navy);
   border: 1px solid transparent;
 }
 
 .actionChip_auto_add {
-  background: var(--amber);
-  color: var(--cream);
+  background: var(--amber-soft);
+  color: var(--amber);
 }
 
 .actionChip_propose {
-  background: var(--amber-soft);
+  background: var(--border-soft);
   color: var(--navy);
 }
 
 .actionChip_discard {
-  background: rgba(27, 42, 78, 0.08);
+  background: var(--border-soft);
   color: var(--muted);
 }
 
@@ -574,10 +574,36 @@
   color: var(--navy);
 }
 
+.hookFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .hookMeta {
   font-size: 0.78rem;
   color: var(--muted);
   margin: 0;
+}
+
+.hookCopy {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.hookCopy:hover,
+.hookCopy:focus-visible {
+  color: var(--navy);
+  border-color: var(--navy);
+  background: var(--cream-elevated);
 }
 
 .actionMeta {
@@ -792,6 +818,13 @@
   gap: 0.65rem;
 }
 
+.snapshotNote {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .telemetryGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
@@ -985,7 +1018,7 @@
 @media (max-width: 880px) {
   .queueColumnHeader,
   .rowSummary {
-    grid-template-columns: 1.5rem 1fr 4rem 7rem;
+    grid-template-columns: 1.5rem 1fr 3rem 8rem;
   }
   .queueColumnHeader > :nth-child(3),
   .rowCompany {

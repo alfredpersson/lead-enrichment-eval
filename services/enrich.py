@@ -315,6 +315,7 @@ async def _replay_integrated_snapshot(
         "model": snap["model"],
         "eval_neighbours": neighbours,
         "snapshot_served": True,
+        "snapshot_generated_at": snap.get("generated_at"),
     }
     return output
 

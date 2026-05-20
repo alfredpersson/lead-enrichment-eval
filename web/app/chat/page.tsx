@@ -453,9 +453,25 @@ export default function ChatPage() {
           signal: controller.signal,
         });
         if (!res.ok || !res.body) {
-          setError({
-            code: `http_${res.status}`,
-            message: `Upstream returned ${res.status}.`,
+          const isRateLimited = res.status === 429;
+          setError(
+            isRateLimited
+              ? {
+                  code: "rate_limited",
+                  message:
+                    "Too many requests. Please wait about a minute before trying again.",
+                }
+              : {
+                  code: `http_${res.status}`,
+                  message: `Upstream returned ${res.status}.`,
+                },
+          );
+          track({
+            name: "error",
+            props: {
+              surface: "chat",
+              kind: isRateLimited ? "rate_limited" : `http_${res.status}`,
+            },
           });
           removeTrailingAssistant(targetId);
           return;

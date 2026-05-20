@@ -64,6 +64,7 @@ export interface EnrichMeta {
   model: string;
   eval_neighbours: EvalNeighbour[];
   snapshot_served?: boolean;
+  snapshot_generated_at?: string;
 }
 
 export interface EnrichOutput {
